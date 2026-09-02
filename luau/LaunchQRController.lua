@@ -103,6 +103,23 @@ local function openRedeemWithCode(code, claimNow)
 	-- Dispara el claim por el deep link (auto)
 	if claimNow ~= false then
 		local result = invokeClaim(code)
+
+		-- FEATURE FLAG server-side: si AGA no tiene el Add-On QR contratado
+		-- (Entrega), el servidor responde ModuleDisabled=true. No abrimos la
+		-- pantalla de recompensa: mostramos un aviso interno discreto en el
+		-- panel y la experiencia sigue normal.
+		if result.ModuleDisabled then
+			warn("[LaunchQR] canje QR deshabilitado por config de módulo (entrega AGA):", result.ErrorMessage or "")
+			gui.Enabled = false
+			if feedback then
+				feedback.Text = "El canje por QR no está disponible en esta experiencia."
+			end
+			task.delay(2.5, function()
+				if gui and gui.Parent then gui.Enabled = false end
+			end)
+			return
+		end
+
 		-- Publica el resultado para que la UI de recompensa/error lo muestre
 		local root = ReplicatedStorage:FindFirstChild("AGA_Racing") or ReplicatedStorage
 		local bridge = root:FindFirstChild("PromoRewardBridge")

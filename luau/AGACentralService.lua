@@ -43,6 +43,45 @@ local AGACentralService = {}
 AGACentralService.__index = AGACentralService
 
 -- ============================================================================
+-- FEATURE FLAGS (server-side): leer AGAModuleConfig si está insertado en el
+-- juego (junto a este módulo). Si NO existe (instalación previa / repo suelto)
+-- se opera con el módulo HABILITADO por defecto, para no romper flujos viejos.
+-- En la entrega final a AGA, AGAModuleConfig debe estar presente con
+-- qrRedemption.Enabled = false → este servicio rechaza TODO canje sin tocar
+-- Praxsuite. Fuente web espejo: web/config.js (ver docs/FEATURE_FLAGS.md).
+-- ============================================================================
+local ModuleConfig = nil
+local function loadModuleConfig()
+	if ModuleConfig ~= nil then return ModuleConfig end
+	local okRequire = pcall(function()
+		local candidate = script.Parent:FindFirstChild("AGAModuleConfig")
+		if not candidate then
+			local sss = game:GetService("ServerScriptService")
+			candidate = sss:FindFirstChild("AGA_Racing") and sss.AGA_Racing:FindFirstChild("AGAModuleConfig")
+				or sss:FindFirstChild("AGAModuleConfig")
+		end
+		if not candidate then error("AGAModuleConfig no encontrado") end
+		ModuleConfig = require(candidate)
+	end)
+	if not okRequire then
+		ModuleConfig = false -- marcado: no hay config → default habilitado
+	end
+	return ModuleConfig
+end
+
+local function moduleEnabled(moduleKey)
+	local cfg = loadModuleConfig()
+	if cfg == false then
+		-- Sin AGAModuleConfig → módulos habilitados (compatibilidad demo).
+		return true
+	end
+	if type(cfg) == "table" and type(cfg.IsModuleEnabled) == "function" then
+		return cfg.IsModuleEnabled(moduleKey)
+	end
+	return true
+end
+
+-- ============================================================================
 -- CONFIGURACIÓN (editar por despliegue / por juego)
 -- ============================================================================
 local DEFAULT_CONFIG = {
@@ -376,6 +415,19 @@ end
 -- ============================================================================
 function AGACentralService:ClaimCode(params)
 	if not config then return { Success = false, ErrorMessage = "AGACentral no inicializado." } end
+
+	-- ── FEATURE FLAG: módulo "qrRedemption" (Add-On) ──────────────────────
+	-- Si AGA no contrató el módulo (Entrega final), el servidor IGNORA el
+	-- reclamo ANTES de tocar Praxsuite: no consume códigos ni escribe nada.
+	-- El juego sigue funcionando; la UI muestra un mensaje interno.
+	if not moduleEnabled("qrRedemption") then
+		return {
+			Success = false,
+			ModuleDisabled = true,
+			ErrorMessage = "El canje por QR no está disponible en esta experiencia.",
+		}
+	end
+
 	local code = tostring(params.code or ""):upper():gsub("%s+", "")
 	local userId = tostring(params.userId or "")
 	if code == "" or userId == "" then

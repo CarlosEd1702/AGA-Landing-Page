@@ -7,6 +7,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>AGA · Galería de QR</title>
+<!-- Feature Flags: ÚNICA fuente web. Ver config.js (Demo ⇄ Entrega). -->
+<script src="config.js"></script>
 <style>
   :root{--rojo:#e11d2e;--naranja:#f97316;--texto:#cbd5e1;--blanco:#f5f7fa;--grafito:#14181f}
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
@@ -34,23 +36,49 @@
   .btn{display:block;width:100%;padding:9px;border:none;border-radius:9px;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#e11d2e,#f97316);color:#fff;margin-top:4px}
   .btn-web{background:rgba(255,255,255,.1);margin-top:6px}
   .note{margin-top:22px;text-align:center;color:#7d8ea3;font-size:12px}
+  /* Vista "módulo no contratado" (qrRedemptionEnabled=false) */
+  .blocked{display:none;max-width:560px;margin:40px auto;background:rgba(255,255,255,.05);border:1px dashed rgba(148,163,184,.45);border-radius:18px;padding:28px 24px;text-align:center}
+  .blocked .ico{font-size:44px;display:block;margin-bottom:10px}
+  .blocked h2{color:var(--blanco);font-size:20px;margin-bottom:8px}
+  .blocked p{color:var(--texto);font-size:13.5px;line-height:1.5;margin-bottom:16px}
+  .blocked .btn{display:inline-block;width:auto;padding:12px 22px}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="head">
-      <div class="logo">A<span>G</span>A</div>
-      <h1>GALERÍA DE QR</h1>
-      <div class="sub">Lote de prueba — cada QR abre el Lobby de su experiencia con el código precargado</div>
+    <!-- Contenido Demo (qrRedemptionEnabled=true): se muestra por JS -->
+    <div id="demoContent">
+      <div class="head">
+        <div class="logo">A<span>G</span>A</div>
+        <h1>GALERÍA DE QR</h1>
+        <div class="sub">Lote de prueba — cada QR abre el Lobby de su experiencia con el código precargado</div>
+      </div>
+      <div class="nav">
+        <a href="#" onclick="go('home');return false;">🏠 Landing</a>
+        <a href="#" onclick="go('qr');return false;" class="active">🔳 Códigos QR</a>
+        <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
+      </div>
+      <div class="grid" id="grid"></div>
+      <div class="note">⚡ Códigos de prueba AGA-2026-… · Carrera → Lobby 123585082660675 · Activación → Lobby 99086248105983</div>
     </div>
-    <div class="nav">
-      <a href="#" onclick="go('home');return false;">🏠 Landing</a>
-      <a href="#" onclick="go('qr');return false;" class="active">🔳 Códigos QR</a>
-      <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
+
+    <!-- Vista Entrega (qrRedemptionEnabled=false): módulo no contratado -->
+    <div class="blocked" id="blockedContent">
+      <span class="ico">🔒</span>
+      <h2>Módulo de canje por QR no disponible</h2>
+      <p>El reclamo de códigos QR es un módulo adicional (Add-On) que no forma parte del
+         contrato actual de AGA. Esta vista queda oculta en la entrega final.</p>
+      <a href="#" class="btn btn-web" onclick="go('reporte');return false;">📊 Ver Dashboard de Métricas y Reportes</a>
     </div>
-    <div class="grid" id="grid"></div>
-    <div class="note">⚡ Códigos de prueba AGA-2026-… · Carrera → Lobby 123585082660675 · Activación → Lobby 99086248105983</div>
   </div>
+<script>
+var qrEnabled = window.AGA && window.AGA.isQRRedemptionEnabled ? window.AGA.isQRRedemptionEnabled() : true;
+if (!qrEnabled) {
+  // Entrega: ocultar galería y mostrar aviso de módulo no contratado.
+  document.getElementById("demoContent").style.display = "none";
+  document.getElementById("blockedContent").style.display = "block";
+}
+</script>
 <script>
 function go(page) {
   var isPrax = location.hostname.indexOf("praxsuite.app") !== -1;

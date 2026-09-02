@@ -122,6 +122,16 @@ local function doClaim(code)
 		if feedback then feedback.Text = "Error de conexión." end
 		return
 	end
+	if typeof(result) == "table" and result.ModuleDisabled then
+		-- FEATURE FLAG server-side: Add-On QR no contratado (Entrega AGA).
+		-- Mostramos aviso interno en el panel y cerramos sin romper la sesión.
+		if feedback then feedback.Text = "El canje por QR no está disponible en esta experiencia." end
+		task.delay(2.5, function()
+			setPanelVisible(false)
+			restoreGuis()
+		end)
+		return
+	end
 	if typeof(result) == "table" and result.Success then
 		if feedback then feedback.Text = "✅ +" .. tostring(result.Coins or 0) .. " Coins" end
 		task.wait(0.4)

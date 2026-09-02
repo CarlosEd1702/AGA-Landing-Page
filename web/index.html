@@ -6,7 +6,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>AGA · Canjea tu código</title>
+<title>AGA · Experiencias</title>
+<!-- Feature Flags: ÚNICA fuente web. Ver config.js (Demo ⇄ Entrega). -->
+<script src="config.js"></script>
 <style>
   :root{
     --rojo:#e11d2e; --naranja:#f97316; --grafito:#14181f; --acero:#232a35;
@@ -71,51 +73,116 @@
   .msg.ok{display:block;background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.5)}
   .msg.err{display:block;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.5)}
   .foot{margin-top:20px;font-size:11px;color:#7d8ea3}
+  .pill-demo{
+    display:inline-block;background:rgba(34,197,94,.16);border:1px solid rgba(34,197,94,.55);color:#86efac;
+    font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-bottom:10px;
+  }
+  .badge-off{
+    display:inline-block;background:rgba(148,163,184,.14);border:1px solid rgba(148,163,184,.4);color:#94a3b8;
+    font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:999px;margin-bottom:10px;
+  }
+  .landing-hero{padding:6px 0 4px}
+  .landing-hero .emoji{font-size:52px;display:block;margin-bottom:6px}
+  .feature-list{text-align:left;margin:16px auto 6px;max-width:430px;display:flex;flex-direction:column;gap:9px}
+  .feature-list div{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--texto);background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:11px;padding:10px 12px}
+  .feature-list b{color:var(--blanco)}
 </style>
 </head>
 <body>
   <div class="stripes"></div>
   <div class="glass">
-    <div class="topnav">
-      <a href="#" onclick="go('qr');return false;">🔳 Códigos QR</a>
-      <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
-    </div>
-    <div class="tagline">Phygital · QR a Roblox</div>
-    <div class="logo">A<span>G</span>A</div>
-    <h1>CANJEÁ TU CÓDIGO</h1>
-    <div class="sub">Elegí la experiencia y abrí tu recompensa en Roblox</div>
 
-    <div id="codigoBox" class="chip" style="display:none">🎟️ <span id="codigoText"></span></div>
-    <div id="sinCodigo" class="sub" style="display:none">Ingresá el código que trae tu producto</div>
-
-    <div class="exp-label">🏁 ¿A qué experiencia querés jugar?</div>
-    <div class="exp-grid">
-      <a href="#" class="exp" onclick="return abrir('street')" id="expStreet">
-        <span class="ico">🏎️</span><b>Carrera para Impresionar</b>
-        <small>Street Track · autos y tiempo</small>
-      </a>
-      <a href="#" class="exp" onclick="return abrir('activation')" id="expActivation">
-        <span class="ico">🎪</span><b>Activación AGA</b>
-        <small>Eventos corporativos / privados</small>
-      </a>
-    </div>
-
-    <button id="btnApp" class="btn btn-primary" style="display:none">🚀 ABRIR EN ROBLOX</button>
-    <button id="btnWeb" class="btn btn-ghost" style="display:none">🌐 ABRIR EN NAVEGADOR WEB</button>
-
-    <div class="manual">
-      <label>¿Tenés otro código? Escribilo acá:</label>
-      <div class="row">
-        <input type="text" id="inputCode" placeholder="EJ: AGA-2026-0001" maxlength="30">
-        <button id="btnGo" class="btn btn-ghost" style="width:auto;padding:12px 16px;margin-top:0">IR</button>
+    <!-- ══════════════ VISTA A · MODO DEMO QR (qrRedemptionEnabled=true) ══════════════ -->
+    <div id="vistaDemo" style="display:none">
+      <div class="topnav">
+        <a id="navQrDemo" href="#" onclick="go('qr');return false;">🔳 Códigos QR</a>
+        <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
       </div>
+      <span class="pill-demo">⚡ Demo interna · Add-On QR activo</span>
+      <div class="tagline">Phygital · QR a Roblox</div>
+      <div class="logo">A<span>G</span>A</div>
+      <h1>CANJEÁ TU CÓDIGO</h1>
+      <div class="sub">Elegí la experiencia y abrí tu recompensa en Roblox</div>
+
+      <div id="codigoBox" class="chip" style="display:none">🎟️ <span id="codigoText"></span></div>
+      <div id="sinCodigo" class="sub" style="display:none">Ingresá el código que trae tu producto</div>
+
+      <div class="exp-label">🏁 ¿A qué experiencia querés jugar?</div>
+      <div class="exp-grid">
+        <a href="#" class="exp" onclick="return abrir('street')" id="expStreet">
+          <span class="ico">🏎️</span><b>Carrera para Impresionar</b>
+          <small>Street Track · autos y tiempo</small>
+        </a>
+        <a href="#" class="exp" onclick="return abrir('activation')" id="expActivation">
+          <span class="ico">🎪</span><b>Activación AGA</b>
+          <small>Eventos corporativos / privados</small>
+        </a>
+      </div>
+
+      <button id="btnApp" class="btn btn-primary" style="display:none">🚀 ABRIR EN ROBLOX</button>
+      <button id="btnWeb" class="btn btn-ghost" style="display:none">🌐 ABRIR EN NAVEGADOR WEB</button>
+
+      <div class="manual">
+        <label>¿Tenés otro código? Escribilo acá:</label>
+        <div class="row">
+          <input type="text" id="inputCode" placeholder="EJ: AGA-2026-0001" maxlength="30">
+          <button id="btnGo" class="btn btn-ghost" style="width:auto;padding:12px 16px;margin-top:0">IR</button>
+        </div>
+      </div>
+
+      <div id="msg" class="msg"></div>
+      <div class="foot">Recompensas: <b>autos · monedas · trofeos</b> · inventario único en ambas experiencias AGA</div>
     </div>
 
-    <div id="msg" class="msg"></div>
-    <div class="foot">Recompensas: <b>autos · monedas · trofeos</b> · inventario único en ambas experiencias AGA</div>
+    <!-- ══════════════ VISTA B · MODO ENTREGA AGA (qrRedemptionEnabled=false) ══════════════ -->
+    <div id="vistaLanding" style="display:none">
+      <div class="topnav">
+        <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
+      </div>
+      <span class="badge-off">Contrato AGA · Dashboard de métricas</span>
+      <div class="landing-hero">
+        <span class="emoji">🏎️</span>
+        <div class="tagline">AGA · Experiencias Roblox</div>
+        <div class="logo">A<span>G</span>A</div>
+        <h1>VIVÍ LA EXPERIENCIA AGA</h1>
+        <div class="sub">Dos mundos para jugar con tu marca: elegí el que más te guste y entrá directo a Roblox.</div>
+      </div>
+
+      <div class="exp-grid">
+        <a href="#" class="exp" onclick="return abrirLanding('street')">
+          <span class="ico">🏎️</span><b>Carrera para Impresionar</b>
+          <small>Street Track · autos y tiempo</small>
+        </a>
+        <a href="#" class="exp" onclick="return abrirLanding('activation')">
+          <span class="ico">🎪</span><b>Activación AGA</b>
+          <small>Eventos corporativos / privados</small>
+        </a>
+      </div>
+
+      <a href="#" class="btn btn-primary" onclick="go('reporte');return false;">📊 VER MÉTRICAS Y REPORTE</a>
+
+      <div class="feature-list" style="margin-top:18px">
+        <div>🕹️ <span><b>Jugabilidad directa.</b> Sin códigos ni pasos previos: entrá y jugá.</span></div>
+        <div>📈 <span><b>Panel de métricas en vivo.</b> Flujo de jugadores, escaneos y recompensas por experiencia.</span></div>
+        <div>🔒 <span><b>Integración phygital opcional.</b> El canje por QR es un módulo adicional de la plataforma.</span></div>
+      </div>
+      <div class="foot">AGA · Phygital a Roblox · Métricas en tiempo real</div>
+    </div>
+
   </div>
 
 <script>
+/* ============================================================
+ * Bootstrap de Feature Flags — decide qué vista renderizar.
+ * Fuente: config.js (window.AGA_CONFIG.features.qrRedemptionEnabled)
+ * ============================================================ */
+var MODE = window.AGA && window.AGA.isQRRedemptionEnabled() ? "demo" : "entrega";
+var isDemo = MODE === "demo";
+document.title = isDemo ? "AGA · Canjeá tu código" : "AGA · Experiencias";
+document.getElementById("vistaDemo").style.display = isDemo ? "block" : "none";
+document.getElementById("vistaLanding").style.display = isDemo ? "none" : "block";
+console.log("[AGA] feature flag qrRedemptionEnabled =", isDemo, "→ vista:", MODE);
+
 /* ============================================================
  * DeepLinkHandler — redirección inteligente a Roblox
  * (iOS/Android: scheme + fallback 2.5s · Desktop: web directo)
@@ -178,11 +245,11 @@ const DeepLinkHandler = (() => {
 })();
 
 /* ============================================================
- * Landing AGA — código + selector de experiencia + botones
+ * VISTA DEMO (canje) — solo si isDemo === true
  * ============================================================ */
 const SCAN_URL = "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/0b62bc9c-267f-4151-86a1-cae7f733dbdf"; // TODO: endpoint AGA scan
 const $ = id => document.getElementById(id);
-const msg = (tipo, texto) => { const m = $("msg"); m.className = "msg " + tipo; m.textContent = texto; };
+const msg = (tipo, texto) => { const m = $("msg"); if (!m) return; m.className = "msg " + tipo; m.textContent = texto; };
 let scanPromise = null;
 let currentCode = "";
 
@@ -199,6 +266,7 @@ function registerScan(code, exp) {
 }
 
 function setCode(code, exp) {
+  if (!isDemo) return;
   code = (code || "").trim().toUpperCase();
   currentCode = code;
   currentExp = exp || currentExp;
@@ -223,7 +291,8 @@ function trackAndContinue() {
 }
 
 function abrir(exp) {
-  // Selecciona experiencia y abre (o resalta si aún no hay código)
+  // Vista DEMO: selecciona experiencia y abre (o resalta si aún no hay código)
+  if (!isDemo) return false;
   currentExp = exp;
   $("expStreet").style.borderColor = exp === "street" ? "var(--naranja)" : "";
   $("expActivation").style.borderColor = exp === "activation" ? "var(--naranja)" : "";
@@ -240,29 +309,46 @@ function abrir(exp) {
   return false;
 }
 
-const params = new URLSearchParams(location.search);
-const codeParam = (params.get("code") || params.get("qr") || "").toUpperCase();
-const expParam = params.get("exp") || params.get("experience") || "street";
-if (PLACES[expParam]) currentExp = expParam;
-if (codeParam) setCode(codeParam, currentExp);
-else { $("codigoBox").style.display = "none"; $("sinCodigo").style.display = "block"; }
-// resaltar experiencia por defecto
-abrir(currentExp);
+/* ============================================================
+ * VISTA ENTREGA (landing institucional) — solo si !isDemo
+ * Sin códigos: deep link con companyId+experience (sin qrCode),
+ * el servidor de Roblox no recibe petición de reclamo.
+ * ============================================================ */
+function abrirLanding(exp) {
+  if (isDemo) return false;
+  const p = PLACES[exp] || PLACES.street;
+  DeepLinkHandler.openRoblox(p.id, { companyId: "aga", experience: exp });
+  return false;
+}
 
-$("btnApp").addEventListener("click", (e) => {
-  e.preventDefault();
-  const code = currentCode || codeParam;
-  const p = PLACES[currentExp] || PLACES.street;
-  trackAndContinue().then(() => DeepLinkHandler.openRoblox(p.id, { qrCode: code, companyId: "aga", experience: currentExp }));
-});
-$("btnWeb").addEventListener("click", (e) => {
-  e.preventDefault();
-  const code = currentCode || codeParam;
-  const p = PLACES[currentExp] || PLACES.street;
-  trackAndContinue().then(() => DeepLinkHandler.openWebBrowser(p.id, { qrCode: code, companyId: "aga", experience: currentExp }));
-});
-$("btnGo").addEventListener("click", () => setCode($("inputCode").value, currentExp));
-$("inputCode").addEventListener("keydown", e => { if (e.key === "Enter") setCode($("inputCode").value, currentExp); });
+/* ============================================================
+ * Arranque según modo
+ * ============================================================ */
+if (isDemo) {
+  const params = new URLSearchParams(location.search);
+  const codeParam = (params.get("code") || params.get("qr") || "").toUpperCase();
+  const expParam = params.get("exp") || params.get("experience") || "street";
+  if (PLACES[expParam]) currentExp = expParam;
+  if (codeParam) setCode(codeParam, currentExp);
+  else { $("codigoBox").style.display = "none"; $("sinCodigo").style.display = "block"; }
+  // resaltar experiencia por defecto
+  abrir(currentExp);
+
+  $("btnApp").addEventListener("click", (e) => {
+    e.preventDefault();
+    const code = currentCode || codeParam;
+    const p = PLACES[currentExp] || PLACES.street;
+    trackAndContinue().then(() => DeepLinkHandler.openRoblox(p.id, { qrCode: code, companyId: "aga", experience: currentExp }));
+  });
+  $("btnWeb").addEventListener("click", (e) => {
+    e.preventDefault();
+    const code = currentCode || codeParam;
+    const p = PLACES[currentExp] || PLACES.street;
+    trackAndContinue().then(() => DeepLinkHandler.openWebBrowser(p.id, { qrCode: code, companyId: "aga", experience: currentExp }));
+  });
+  $("btnGo").addEventListener("click", () => setCode($("inputCode").value, currentExp));
+  $("inputCode").addEventListener("keydown", e => { if (e.key === "Enter") setCode($("inputCode").value, currentExp); });
+}
 </script>
 </body>
 </html>

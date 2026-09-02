@@ -6,8 +6,10 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>AGA · Reporte</title>
+<title>AGA · Reporte de Métricas</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Feature Flags: ÚNICA fuente web. Ver config.js (Demo ⇄ Entrega). -->
+<script src="config.js"></script>
 <style>
   :root{--rojo:#e11d2e;--naranja:#f97316;--texto:#cbd5e1;--blanco:#f5f7fa;--grafito:#14181f}
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
@@ -54,13 +56,14 @@
       <div class="logo">A<span>G</span>A · REPORTE</div>
       <div class="sub">Métricas de flujo por empresa y por experiencia</div>
     </div>
-    <div class="nav">
-      <a href="#" onclick="go('home');return false;">🏠 Landing</a>
-      <a href="#" onclick="go('qr');return false;">🔳 Códigos QR</a>
+    <div class="nav" id="topNav">
+      <a href="#" onclick="go('home');return false;">🏠 Inicio</a>
+      <a href="#" id="navQr" onclick="go('qr');return false;">🔳 Códigos QR</a>
       <a href="#" onclick="go('reporte');return false;" class="active">📊 Reporte</a>
     </div>
 
-    <div class="toolbar">
+    <!-- Selector de empresa: visible solo en modo INTERNO (tenantSwitcherEnabled=true) -->
+    <div class="toolbar" id="companyBar" style="display:flex">
       <label>Empresa:</label>
       <select id="companySelect">
         <option value="aga" selected>⚫ AGA (AGA_*)</option>
@@ -118,6 +121,24 @@ function go(page) {
 }
 
 // ============================================================================
+//  FEATURE FLAGS (fuente: config.js → window.AGA_CONFIG)
+//  - qrRedemptionEnabled === false (Entrega AGA): oculta el link "Códigos QR".
+//  - tenantSwitcherEnabled === false (Entregable limpio AGA): fija companyId
+//    "aga", oculta el selector de empresa y deja solo el filtro por experiencia.
+//  reporte.html funciona 100% independiente: es el entregable principal del
+//  contrato (Dashboard de Métricas y Reportes).
+// ============================================================================
+var AGACfg = (window.AGA && window.AGA.config) || { features: {}, tenants: {} };
+var qrEnabled = !!(AGACfg.features && AGACfg.features.qrRedemptionEnabled);
+var tenantSwitcher = !!(AGACfg.features && AGACfg.features.tenantSwitcherEnabled);
+var navQr = document.getElementById("navQr");
+if (navQr && !qrEnabled) navQr.style.display = "none";
+if (!tenantSwitcher) {
+  var companyBar = document.getElementById("companyBar");
+  if (companyBar) companyBar.style.display = "none";
+}
+
+// ============================================================================
 //  REPORTE MULTI-TENANT + MULTI-EXPERIENCIA
 //  companyId: "aga" (AGA_*) | "logrus" (LGR_*)
 //  experience: "all" | "street" | "activation"  (solo dentro de AGA)
@@ -131,6 +152,9 @@ const urlParams = new URLSearchParams(location.search);
 let companyId = (urlParams.get("companyId") || "aga").toLowerCase();
 let experience = urlParams.get("exp") || "all";
 if (!ENDPOINTS[companyId]) companyId = "aga";
+// Entregable limpio AGA (tenantSwitcher=false): el reporte queda fijo en AGA,
+// aunque el link se abra con ?companyId=logrus (uso interno vía flag true).
+if (!tenantSwitcher) companyId = "aga";
 $("companySelect").value = companyId;
 $("expSelect").value = ENDPOINTS[experience] ? experience : "all";
 if (companyId !== "aga") {

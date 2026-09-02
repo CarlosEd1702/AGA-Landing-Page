@@ -37,6 +37,37 @@ AGAQRRedeemService.__index = AGAQRRedeemService
 local initialized = false
 local config = nil
 
+-- ============================================================================
+-- FEATURE FLAG "qrRedemption" (Add-On): si AGAModuleConfig existe en el juego
+-- con qrRedemption.Enabled = false (Entrega a AGA), este servicio responde
+-- ModuleDisabled SIN procesar el reclamo. Fuente web espejo: web/config.js.
+-- ============================================================================
+local ModuleConfig = nil
+local function loadModuleConfig()
+	if ModuleConfig ~= nil then return ModuleConfig end
+	local okRequire = pcall(function()
+		local sss = game:GetService("ServerScriptService")
+		local candidate = sss:FindFirstChild("AGA_Racing") and sss.AGA_Racing:FindFirstChild("AGAModuleConfig")
+			or sss:FindFirstChild("AGAModuleConfig")
+			or (script.Parent and script.Parent:FindFirstChild("AGAModuleConfig"))
+		if not candidate then error("AGAModuleConfig no encontrado") end
+		ModuleConfig = require(candidate)
+	end)
+	if not okRequire then
+		ModuleConfig = false -- sin config → habilitado (compatibilidad demo)
+	end
+	return ModuleConfig
+end
+
+local function moduleEnabled(moduleKey)
+	local cfg = loadModuleConfig()
+	if cfg == false then return true end
+	if type(cfg) == "table" and type(cfg.IsModuleEnabled) == "function" then
+		return cfg.IsModuleEnabled(moduleKey)
+	end
+	return true
+end
+
 local function ensureRemote(parent, name, className)
 	local child = parent:FindFirstChild(name)
 	if child and not child:IsA(className) then
@@ -102,6 +133,19 @@ function AGAQRRedeemService:claimForPlayer(player, request)
 	if not config then
 		return { Success = false, ErrorMessage = "Servicio no inicializado." }
 	end
+
+	-- ── FEATURE FLAG: módulo "qrRedemption" (Add-On) ──────────────────────
+	-- Entrega a AGA (flag false): se IGNORA el reclamo sin validar códigos ni
+	-- llamar al backend central. Respuesta controlada para que la UI del juego
+	-- muestre un mensaje interno y la sesión no se rompa.
+	if not moduleEnabled("qrRedemption") then
+		return {
+			Success = false,
+			ModuleDisabled = true,
+			ErrorMessage = "El canje por QR no está disponible en esta experiencia.",
+		}
+	end
+
 	if typeof(request) ~= "table" then
 		return { Success = false, ErrorMessage = "Solicitud inválida." }
 	end

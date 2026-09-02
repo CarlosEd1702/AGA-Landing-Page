@@ -2,6 +2,21 @@
 
 > companyId: `"aga"` · Workspace Praxsuite: `cc6ac8fa-e31c-421d-99af-15951a0e8a7a`
 
+## 🚦 Módulos comerciales y Feature Flags
+
+El contrato AGA incluye **Dashboard de Métricas** (`reporte.html`). El **canje por
+QR** es un **Add-On** que se activa solo en Demo. Ver
+[`FEATURE_FLAGS.md`](FEATURE_FLAGS.md) para el detalle completo y el runbook.
+
+| Flag | Web (`web/config.js`) | Roblox (`luau/AGAModuleConfig.lua`) |
+|---|---|---|
+| Canje QR (Add-On) | `features.qrRedemptionEnabled` | `Modules.qrRedemption.Enabled` |
+| Dashboard (entregable) | `features.analyticsDashboardEnabled` | `Modules.analyticsDashboard.Enabled` |
+
+Enforcement server-authoritative: `AGACentralService:ClaimCode` y
+`AGAQRRedeemService:claimForPlayer` rechazan con `ModuleDisabled=true` (sin tocar
+Praxsuite) cuando el flag Roblox está en `false`.
+
 ## Visión
 
 Dos experiencias independientes en Roblox comparten **un solo backend**:
