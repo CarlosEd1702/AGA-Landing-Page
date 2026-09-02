@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>AGA · Canjea tu código</title>
+<style>
+  :root{
+    --rojo:#e11d2e; --naranja:#f97316; --grafito:#14181f; --acero:#232a35;
+    --blanco:#f5f7fa; --texto:#cbd5e1; --verde:#22c55e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  body{
+    min-height:100vh;background:
+      radial-gradient(ellipse at 20% 0%, rgba(225,29,46,.35), transparent 55%),
+      radial-gradient(ellipse at 90% 100%, rgba(249,115,22,.22), transparent 50%),
+      linear-gradient(160deg,#0b0e13 0%,#14181f 45%,#1c232e 100%);
+    color:var(--texto);display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden;
+  }
+  .stripes{position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 46px,rgba(255,255,255,.015) 46px 92px);pointer-events:none}
+  .glass{
+    background:linear-gradient(160deg,rgba(28,35,46,.92),rgba(20,24,31,.88));
+    backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);border-radius:26px;
+    box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);
+    max-width:600px;width:100%;padding:32px 34px 28px;position:relative;z-index:2;text-align:center;
+  }
+  .topnav{display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px}
+  .topnav a{color:var(--blanco);font-weight:700;text-decoration:none;background:rgba(255,255,255,.08);padding:6px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.2);font-size:12px;cursor:pointer;transition:background .15s}
+  .topnav a:hover{background:rgba(255,255,255,.18)}
+  .logo{font-size:26px;font-weight:900;letter-spacing:6px;color:var(--blanco);text-transform:uppercase;margin-bottom:2px}
+  .logo span{color:var(--rojo)}
+  .tagline{color:var(--naranja);font-weight:800;letter-spacing:2px;font-size:12px;text-transform:uppercase;margin-bottom:4px}
+  h1{font-size:28px;font-weight:800;color:var(--blanco);line-height:1.2;margin:10px 0 6px}
+  .sub{color:var(--texto);font-size:14px;margin-bottom:22px}
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);
+    border:1.5px dashed rgba(249,115,22,.7);color:var(--blanco);font-weight:800;
+    font-size:19px;letter-spacing:2px;padding:9px 20px;border-radius:12px;margin-bottom:16px;
+  }
+  .exp-label{font-size:12px;font-weight:800;color:var(--naranja);text-transform:uppercase;letter-spacing:1.5px;margin:14px 0 10px}
+  .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media (max-width:480px){.exp-grid{grid-template-columns:1fr}}
+  .exp{
+    background:linear-gradient(160deg,rgba(35,42,53,.9),rgba(20,24,31,.9));
+    border:1.5px solid rgba(255,255,255,.14);border-radius:16px;padding:18px 14px;cursor:pointer;
+    transition:transform .12s,box-shadow .15s,border-color .15s;text-align:center;display:block;text-decoration:none;color:var(--blanco);
+  }
+  .exp:hover{transform:translateY(-2px);border-color:var(--naranja);box-shadow:0 12px 26px rgba(249,115,22,.18)}
+  .exp .ico{font-size:30px;display:block;margin-bottom:8px}
+  .exp b{display:block;font-size:15px}
+  .exp small{color:var(--texto);font-size:11px;display:block;margin-top:4px}
+  .btn{
+    display:block;width:100%;padding:15px;border:none;border-radius:14px;font-size:16px;font-weight:800;cursor:pointer;
+    margin-top:10px;text-decoration:none;transition:transform .12s,box-shadow .12s;
+  }
+  .btn:active{transform:scale(.98)}
+  .btn-primary{background:linear-gradient(135deg,#e11d2e,#f97316);color:#fff;box-shadow:0 10px 24px rgba(225,29,46,.35)}
+  .btn-ghost{background:rgba(255,255,255,.06);color:var(--blanco);border:1.5px solid rgba(255,255,255,.25)}
+  .manual{margin-top:20px;border-top:1px solid rgba(255,255,255,.12);padding-top:16px}
+  .manual label{font-size:12px;font-weight:700;color:var(--texto);display:block;margin-bottom:6px}
+  .row{display:flex;gap:8px}
+  input[type=text]{
+    flex:1;padding:12px 13px;border:1.5px solid rgba(255,255,255,.25);border-radius:11px;font-size:15px;font-weight:700;
+    letter-spacing:1px;color:var(--blanco);background:rgba(0,0,0,.25);outline:none;text-transform:uppercase;
+  }
+  input[type=text]:focus{border-color:var(--naranja)}
+  .msg{display:none;margin-top:12px;padding:11px 13px;border-radius:11px;font-weight:700;font-size:13px}
+  .msg.ok{display:block;background:rgba(34,197,94,.15);color:#86efac;border:1px solid rgba(34,197,94,.5)}
+  .msg.err{display:block;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.5)}
+  .foot{margin-top:20px;font-size:11px;color:#7d8ea3}
+</style>
+</head>
+<body>
+  <div class="stripes"></div>
+  <div class="glass">
+    <div class="topnav">
+      <a href="#" onclick="go('qr');return false;">🔳 Códigos QR</a>
+      <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
+    </div>
+    <div class="tagline">Phygital · QR a Roblox</div>
+    <div class="logo">A<span>G</span>A</div>
+    <h1>CANJEÁ TU CÓDIGO</h1>
+    <div class="sub">Elegí la experiencia y abrí tu recompensa en Roblox</div>
+
+    <div id="codigoBox" class="chip" style="display:none">🎟️ <span id="codigoText"></span></div>
+    <div id="sinCodigo" class="sub" style="display:none">Ingresá el código que trae tu producto</div>
+
+    <div class="exp-label">🏁 ¿A qué experiencia querés jugar?</div>
+    <div class="exp-grid">
+      <a href="#" class="exp" onclick="return abrir('street')" id="expStreet">
+        <span class="ico">🏎️</span><b>Carrera para Impresionar</b>
+        <small>Street Track · autos y tiempo</small>
+      </a>
+      <a href="#" class="exp" onclick="return abrir('activation')" id="expActivation">
+        <span class="ico">🎪</span><b>Activación AGA</b>
+        <small>Eventos corporativos / privados</small>
+      </a>
+    </div>
+
+    <button id="btnApp" class="btn btn-primary" style="display:none">🚀 ABRIR EN ROBLOX</button>
+    <button id="btnWeb" class="btn btn-ghost" style="display:none">🌐 ABRIR EN NAVEGADOR WEB</button>
+
+    <div class="manual">
+      <label>¿Tenés otro código? Escribilo acá:</label>
+      <div class="row">
+        <input type="text" id="inputCode" placeholder="EJ: AGA-2026-0001" maxlength="30">
+        <button id="btnGo" class="btn btn-ghost" style="width:auto;padding:12px 16px;margin-top:0">IR</button>
+      </div>
+    </div>
+
+    <div id="msg" class="msg"></div>
+    <div class="foot">Recompensas: <b>autos · monedas · trofeos</b> · inventario único en ambas experiencias AGA</div>
+  </div>
+
+<script>
+/* ============================================================
+ * DeepLinkHandler — redirección inteligente a Roblox
+ * (iOS/Android: scheme + fallback 2.5s · Desktop: web directo)
+ * Soporta 2 experiencias AGA con placeId distinto.
+ * ============================================================ */
+const PLACES = {
+  street:     { id: "108987866733849", name: "Carrera para Impresionar" }, // TODO: confirmar placeId
+  activation: { id: "0",                name: "Activación AGA" }             // TODO: rellenar placeId
+};
+let currentExp = "street";
+
+function go(page) {
+  // go(page): navegación consistente entre vistas.
+  //  - Producción (dominio praxsuite.app): slugs limpios /, /qr, /reporte
+  //  - Local / archivo estático: archivos .html del mismo directorio
+  var isPrax = location.hostname.indexOf("praxsuite.app") !== -1;
+  var routes = {
+    home:    isPrax ? "/" : "index.html",
+    qr:      isPrax ? "/qr" : "qr.html",
+    reporte: isPrax ? "/reporte" : "reporte.html"
+  };
+  window.location.href = routes[page] || page;
+}
+
+const DeepLinkHandler = (() => {
+  "use strict";
+  const encodeLaunchData = (ld) => encodeURIComponent(JSON.stringify(ld || {}));
+  const buildScheme = (placeId, e) => "roblox://navigation/game_details?gameId=" + encodeURIComponent(String(placeId)) + "&launchData=" + e;
+  const buildWebUrl = (placeId, e) => "https://www.roblox.com/games/" + encodeURIComponent(String(placeId)) + (e ? "?launchData=" + e : "");
+  const isMobile = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) || /Android/i.test(navigator.userAgent);
+  let appOpened = false;
+  const onVis = () => { if (document.hidden) appOpened = true; };
+  const onHide = () => { appOpened = true; };
+  const openInApp = (placeId, ld) => {
+    if (!isMobile()) return false;
+    appOpened = false;
+    document.addEventListener("visibilitychange", onVis, { once: true });
+    window.addEventListener("pagehide", onHide, { once: true });
+    window.location.href = buildScheme(placeId, ld);
+    setTimeout(() => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pagehide", onHide);
+      if (!appOpened && !document.hidden) window.location.href = buildWebUrl(placeId, ld);
+    }, 2500);
+    return true;
+  };
+  const openRoblox = (placeId, launchData) => {
+    const ld = encodeLaunchData(launchData);
+    if (openInApp(placeId, ld)) return { method: "scheme" };
+    const w = window.open(buildWebUrl(placeId, ld), "_blank", "noopener");
+    if (!w) window.location.href = buildWebUrl(placeId, ld);
+    return { method: "web" };
+  };
+  const openWebBrowser = (placeId, launchData) => {
+    const w = window.open(buildWebUrl(placeId, encodeLaunchData(launchData)), "_blank", "noopener");
+    if (!w) window.location.href = buildWebUrl(placeId, launchData);
+    return !!w;
+  };
+  return { openRoblox, openWebBrowser, isMobile };
+})();
+
+/* ============================================================
+ * Landing AGA — código + selector de experiencia + botones
+ * ============================================================ */
+const SCAN_URL = "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/0b62bc9c-267f-4151-86a1-cae7f733dbdf"; // TODO: endpoint AGA scan
+const $ = id => document.getElementById(id);
+const msg = (tipo, texto) => { const m = $("msg"); m.className = "msg " + tipo; m.textContent = texto; };
+let scanPromise = null;
+let currentCode = "";
+
+function registerScan(code, exp) {
+  const placeId = PLACES[exp] ? PLACES[exp].id : "";
+  return fetch(SCAN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: code, companyId: "aga", experience: exp, placeId: placeId })
+  }).then(r => r.json().catch(() => ({}))).then(d => {
+    if (d && d.ok) { console.log("[AGA] escaneo registrado:", code); return true; }
+    console.warn("[AGA] escaneo no confirmado:", d); return false;
+  }).catch(e => { console.warn("[AGA] error de escaneo:", e); return false; });
+}
+
+function setCode(code, exp) {
+  code = (code || "").trim().toUpperCase();
+  currentCode = code;
+  currentExp = exp || currentExp;
+  if (!code) {
+    $("codigoBox").style.display = "none"; $("sinCodigo").style.display = "block";
+    $("btnApp").style.display = "none"; $("btnWeb").style.display = "none";
+    return;
+  }
+  $("codigoBox").style.display = "inline-flex";
+  $("sinCodigo").style.display = "none";
+  $("codigoText").textContent = code;
+  $("btnApp").style.display = "block";
+  $("btnWeb").style.display = "block";
+  const expName = PLACES[currentExp] ? PLACES[currentExp].name : currentExp;
+  msg("ok", "🎉 Código reconocido (" + expName + "). Pulsa ABRIR EN ROBLOX.");
+  scanPromise = registerScan(code, currentExp);
+}
+
+function trackAndContinue() {
+  const p = scanPromise || Promise.resolve(false);
+  return Promise.race([p, new Promise(res => setTimeout(() => res(false), 4000))]);
+}
+
+function abrir(exp) {
+  // Selecciona experiencia y abre (o resalta si aún no hay código)
+  currentExp = exp;
+  $("expStreet").style.borderColor = exp === "street" ? "var(--naranja)" : "";
+  $("expActivation").style.borderColor = exp === "activation" ? "var(--naranja)" : "";
+  if (currentCode) {
+    registerScan(currentCode, exp); // registrar con la exp elegida
+    trackAndContinue().then(() => {
+      const p = PLACES[exp] || PLACES.street;
+      DeepLinkHandler.openRoblox(p.id, { qrCode: currentCode, companyId: "aga", experience: exp });
+    });
+  } else {
+    msg("warn", "Primero ingresá el código del QR.");
+    $("inputCode").focus();
+  }
+  return false;
+}
+
+const params = new URLSearchParams(location.search);
+const codeParam = (params.get("code") || params.get("qr") || "").toUpperCase();
+const expParam = params.get("exp") || params.get("experience") || "street";
+if (PLACES[expParam]) currentExp = expParam;
+if (codeParam) setCode(codeParam, currentExp);
+else { $("codigoBox").style.display = "none"; $("sinCodigo").style.display = "block"; }
+// resaltar experiencia por defecto
+abrir(currentExp);
+
+$("btnApp").addEventListener("click", (e) => {
+  e.preventDefault();
+  const code = currentCode || codeParam;
+  const p = PLACES[currentExp] || PLACES.street;
+  trackAndContinue().then(() => DeepLinkHandler.openRoblox(p.id, { qrCode: code, companyId: "aga", experience: currentExp }));
+});
+$("btnWeb").addEventListener("click", (e) => {
+  e.preventDefault();
+  const code = currentCode || codeParam;
+  const p = PLACES[currentExp] || PLACES.street;
+  trackAndContinue().then(() => DeepLinkHandler.openWebBrowser(p.id, { qrCode: code, companyId: "aga", experience: currentExp }));
+});
+$("btnGo").addEventListener("click", () => setCode($("inputCode").value, currentExp));
+$("inputCode").addEventListener("keydown", e => { if (e.key === "Enter") setCode($("inputCode").value, currentExp); });
+</script>
+</body>
+</html>

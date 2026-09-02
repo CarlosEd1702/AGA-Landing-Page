@@ -1,0 +1,13 @@
+﻿# Credenciales y secretos — NUNCA commitear
+*.key
+*.pem
+.env
+.env.*
+secrets.json
+credentials.json
+node_modules/
+package-lock.json
+.npm-cache/
+.tmp-*/
+*.log
+# El HTML y el .lua contienen WorkspaceId + placeholders; mantener PRIVADO.

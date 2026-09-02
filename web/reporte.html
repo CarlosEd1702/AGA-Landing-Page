@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>AGA · Reporte</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{--rojo:#e11d2e;--naranja:#f97316;--texto:#cbd5e1;--blanco:#f5f7fa;--grafito:#14181f}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+  body{min-height:100vh;background:
+      radial-gradient(ellipse at 20% 0%, rgba(225,29,46,.3), transparent 55%),
+      linear-gradient(160deg,#0b0e13,#14181f 45%,#1c232e);
+    color:var(--texto);padding:28px 18px}
+  .wrap{max-width:1080px;margin:0 auto}
+  .head{text-align:center;margin-bottom:20px}
+  .logo{font-size:24px;font-weight:900;letter-spacing:5px;color:var(--blanco);text-transform:uppercase}
+  .logo span{color:var(--rojo)}
+  h1{font-size:26px;font-weight:800;color:var(--blanco);margin:2px 0}
+  .sub{opacity:.85;font-size:13px}
+  .nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+  .nav a{color:var(--blanco);font-weight:700;text-decoration:none;background:rgba(255,255,255,.07);padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);font-size:13px}
+  .nav a.active{background:rgba(255,255,255,.92);color:#111}
+  .toolbar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:16px;background:rgba(255,255,255,.06);padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.12)}
+  .toolbar label{font-weight:800;color:var(--naranja);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .toolbar select{padding:9px 12px;border:1px solid rgba(255,255,255,.25);border-radius:9px;font-weight:700;color:var(--blanco);background:#1a2029}
+  .toolbar .tag{background:rgba(249,115,22,.15);border:1px dashed var(--naranja);color:var(--naranja);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:15px 16px}
+  .kpi .n{font-size:28px;font-weight:800;color:var(--blanco)}
+  .kpi .l{font-size:11px;font-weight:700;color:var(--naranja);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+  .kpi .s{font-size:11px;color:#7d8ea3;margin-top:2px}
+  .panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;margin-bottom:16px}
+  .panel h2{font-size:14px;color:var(--blanco);margin-bottom:12px}
+  .chart-box{position:relative;height:260px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{background:rgba(255,255,255,.08);color:var(--naranja);text-align:left;padding:8px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.07);color:var(--texto);font-weight:600}
+  tr:hover td{background:rgba(255,255,255,.03)}
+  .st{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;background:rgba(34,197,94,.18);color:#86efac}
+  .st-race{background:rgba(225,29,46,.18);color:#fca5a5}
+  .st-act{background:rgba(249,115,22,.18);color:#fdba74}
+  .empty{color:#7d8ea3;font-weight:600;padding:14px;text-align:center}
+  .err{display:none;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.4);border-radius:11px;padding:11px 13px;font-weight:700;margin-bottom:14px;text-align:center}
+  .loading{color:var(--blanco);font-weight:700;text-align:center;padding:30px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div class="logo">A<span>G</span>A · REPORTE</div>
+      <div class="sub">Métricas de flujo por empresa y por experiencia</div>
+    </div>
+    <div class="nav">
+      <a href="#" onclick="go('home');return false;">🏠 Landing</a>
+      <a href="#" onclick="go('qr');return false;">🔳 Códigos QR</a>
+      <a href="#" onclick="go('reporte');return false;" class="active">📊 Reporte</a>
+    </div>
+
+    <div class="toolbar">
+      <label>Empresa:</label>
+      <select id="companySelect">
+        <option value="aga" selected>⚫ AGA (AGA_*)</option>
+        <option value="logrus">🔴 Logrus (LGR_*)</option>
+      </select>
+      <span class="tag" id="tenantTag">companyId = aga</span>
+    </div>
+
+    <!-- Filtro secundario: desglose por experiencia dentro de AGA -->
+    <div class="toolbar" id="expBar" style="display:flex">
+      <label>Experiencia:</label>
+      <select id="expSelect">
+        <option value="all" selected>🌐 Todas (AGA Global)</option>
+        <option value="street">🏎️ Carrera para Impresionar</option>
+        <option value="activation">🎪 Activación AGA</option>
+      </select>
+      <span class="tag" id="expTag">filtro: todas</span>
+    </div>
+
+    <div id="err" class="err"></div>
+    <div id="loading" class="loading">Cargando métricas…</div>
+
+    <div id="dash" style="display:none">
+      <div class="kpis" id="kpis"></div>
+      <div class="panel">
+        <h2>📈 Escaneos y Reclamos por día (filtro aplicado)</h2>
+        <div class="chart-box"><canvas id="chart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h2>🏁 Comparativa por experiencia (AGA)</h2>
+        <div style="overflow-x:auto"><table id="tblExp">
+          <thead><tr><th>Experiencia</th><th>Escaneos</th><th>Reclamos Únicos</th><th>Conversión</th><th>Jugadores</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </div>
+      <div class="panel">
+        <h2>🏷️ Últimos códigos canjeados</h2>
+        <div style="overflow-x:auto"><table id="tbl">
+          <thead><tr><th>Código</th><th>Experiencia</th><th>Roblox User</th><th>Recompensa</th><th>Fecha</th><th>Estado</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+function go(page) {
+  var isPrax = location.hostname.indexOf("praxsuite.app") !== -1;
+  var routes = {
+    home:    isPrax ? "/" : "index.html",
+    qr:      isPrax ? "/qr" : "qr.html",
+    reporte: isPrax ? "/reporte" : "reporte.html"
+  };
+  window.location.href = routes[page] || page;
+}
+
+// ============================================================================
+//  REPORTE MULTI-TENANT + MULTI-EXPERIENCIA
+//  companyId: "aga" (AGA_*) | "logrus" (LGR_*)
+//  experience: "all" | "street" | "activation"  (solo dentro de AGA)
+// ============================================================================
+const ENDPOINTS = {
+  aga:    "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/42064538-6bc8-4e6f-a386-070d929a9220",
+  logrus: "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/b3b14430-daab-46e5-b6e3-46ac32526a37",
+};
+const $ = id => document.getElementById(id);
+const urlParams = new URLSearchParams(location.search);
+let companyId = (urlParams.get("companyId") || "aga").toLowerCase();
+let experience = urlParams.get("exp") || "all";
+if (!ENDPOINTS[companyId]) companyId = "aga";
+$("companySelect").value = companyId;
+$("expSelect").value = ENDPOINTS[experience] ? experience : "all";
+if (companyId !== "aga") {
+  $("expBar").style.display = "none";
+  experience = "all";
+}
+let chart = null;
+
+function fmtDate(iso){
+  if(!iso) return "—";
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return iso;
+  return d.toLocaleString("es-AR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
+}
+
+async function load(){
+  $("loading").style.display = "block";
+  $("dash").style.display = "none";
+  $("err").style.display = "none";
+  $("tenantTag").textContent = "companyId = " + companyId + (companyId === "aga" ? " · exp = " + experience : "");
+  let data;
+  try {
+    const res = await fetch(ENDPOINTS[companyId], {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyId, experience }),
+    });
+    data = await res.json();
+  } catch(e){
+    data = { ok:false, error:String(e && e.message || e) };
+  }
+  $("loading").style.display = "none";
+  if (!data || !data.ok){
+    $("err").style.display = "block";
+    $("err").textContent = "⚠️ " + (data && data.error || "Error al cargar métricas");
+    return;
+  }
+  $("dash").style.display = "block";
+  renderKpis(data.kpis || {});
+  renderChart(data.series || []);
+  renderExpTable(data.byExperience || []);
+  renderTable(data.recent || []);
+}
+
+function renderKpis(k){
+  const items = [
+    { n: k.scans ?? 0, l: "Total de Escaneos", s: "aperturas de QR" },
+    { n: k.redeemedUnique ?? 0, l: "Códigos Reclamados Únicos", s: "items entregados" },
+    { n: (k.conversionRate ?? 0) + "%", l: "Tasa de Conversión", s: "reclamos / escaneos" },
+    { n: k.players ?? 0, l: "Jugadores", s: "usuarios únicos" },
+    { n: k.unlockedCars ?? 0, l: "Autos desbloqueados", s: "inventario global" },
+    { n: k.unlockedPets ?? 0, l: "Pets desbloqueadas", s: "inventario global" },
+  ];
+  $("kpis").innerHTML = items.map(i =>
+    '<div class="kpi"><div class="n">' + i.n + '</div><div class="l">' + i.l + '</div><div class="s">' + i.s + '</div></div>'
+  ).join("");
+}
+
+function renderChart(series){
+  if (chart) chart.destroy();
+  const ctx = $("chart").getContext("2d");
+  chart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: series.map(s => s.date),
+      datasets: [
+        { label: "Escaneos", data: series.map(s => s.scans || 0), backgroundColor: "rgba(225,29,46,.75)", borderRadius: 5 },
+        { label: "Reclamos", data: series.map(s => s.redeemed || 0), backgroundColor: "rgba(249,115,22,.85)", borderRadius: 5 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: "#f5f7fa", font: { weight: "bold" } } } },
+      scales: {
+        x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+        y: { beginAtZero: true, ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(255,255,255,.08)" } },
+      },
+    },
+  });
+}
+
+function renderExpTable(rows){
+  const tb = $("tblExp").querySelector("tbody");
+  if (!rows || !rows.length){
+    tb.innerHTML = '<tr><td colspan="5" class="empty">Sin datos por experiencia</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(r => {
+    const cls = r.experience === "street" ? "st-race" : "st-act";
+    const label = r.experience === "street" ? "🏎️ Carrera" : "🎪 Activación";
+    return "<tr><td><span class='st " + cls + "'>" + label + "</span></td><td>" + (r.scans || 0) + "</td><td>" + (r.redeemed || 0) + "</td><td>" + (r.conversionRate ?? 0) + "%</td><td>" + (r.players || 0) + "</td></tr>";
+  }).join("");
+}
+
+function renderTable(recent){
+  const tb = $("tbl").querySelector("tbody");
+  if (!recent.length){
+    tb.innerHTML = '<tr><td colspan="6" class="empty">Sin canjes aún</td></tr>';
+    return;
+  }
+  tb.innerHTML = recent.map(r => {
+    const cls = r.experience === "street" ? "st-race" : "st-act";
+    return "<tr><td><b>" + (r.code || "—") + "</b></td><td><span class='st " + cls + "'>" + (r.experience === "street" ? "Carrera" : r.experience === "activation" ? "Activación" : "—") + "</span></td><td>" + (r.userId || "—") + "</td><td>" + (r.reward || "—") + "</td><td>" + fmtDate(r.claimedAt) + "</td><td><span class='st'>" + (r.status || "—") + "</span></td></tr>";
+  }).join("");
+}
+
+$("companySelect").addEventListener("change", () => {
+  companyId = $("companySelect").value;
+  if (companyId !== "aga") {
+    $("expBar").style.display = "none"; experience = "all";
+  } else {
+    $("expBar").style.display = "flex";
+    experience = $("expSelect").value;
+  }
+  const url = new URL(location.href);
+  url.searchParams.set("companyId", companyId);
+  url.searchParams.set("exp", experience);
+  history.replaceState(null, "", url);
+  load();
+});
+$("expSelect").addEventListener("change", () => {
+  experience = $("expSelect").value;
+  const url = new URL(location.href);
+  url.searchParams.set("exp", experience);
+  history.replaceState(null, "", url);
+  load();
+});
+load();
+setInterval(() => load(), 15000);
+</script>
+</body>
+</html>
