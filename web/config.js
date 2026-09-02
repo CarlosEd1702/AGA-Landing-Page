@@ -42,7 +42,7 @@ var AGA_CONFIG = {
     //         landing institucional; qr.html queda bloqueado con aviso).
     // ESTADO POR DEFECTO DEL REPO (main) = ENTREGA → false.
     // Para demo: pwsh tools/set-mode.ps1 demo (o bash tools/set-mode.sh demo).
-    qrRedemptionEnabled: false,
+    qrRedemptionEnabled: true,
 
     // ── Módulo contratado: "Dashboard de Métricas y Reportes" ───────────────
     // Entregable principal de AGA (reporte.html). Se mantiene SIEMPRE true.
@@ -52,7 +52,7 @@ var AGA_CONFIG = {
     // true  → uso INTERNO del equipo: el reporte permite cambiar de empresa.
     // false → entregable limpio a AGA: el reporte queda fijado en companyId "aga".
     // ESTADO POR DEFECTO DEL REPO (main) = ENTREGA → false (reporte fijo AGA).
-    tenantSwitcherEnabled: false,
+    tenantSwitcherEnabled: true,
   },
 
   // Empresas disponibles en el reporte (solo si tenantSwitcherEnabled === true).

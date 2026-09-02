@@ -41,10 +41,11 @@ cómo alternar modos y dónde vive cada bandera (web `config.js` + Roblox
 │   └── js/deep-link-handler.js  ← handler deep link (copia de Electrolit)
 ├── luau/
 │   ├── AGAModuleConfig.lua      ← Feature flags server-side (Roblox) — NUEVO
-│   ├── AGACentralService.lua    ← backend central compartido (gate qrRedemption)
-│   ├── AGAQRRedeemService.lua   ← flujo server de reclamo (gate qrRedemption)
-│   ├── LaunchQRController.lua   ← cliente deep link (maneja ModuleDisabled)
-│   └── QRRedeemController.lua   ← cliente canje manual (maneja ModuleDisabled)
+│   ├── AGACentralService.lua    ← backend central compartido (RecordQRAttribution + gates)
+│   ├── AGAGameSessionsService.lua ← sesiones de juego (AGA_Game_Sessions, 4 places) — NUEVO
+│   ├── AGAQRRedeemService.lua   ← flujo server de reclamo (atribución demo, GrantReward preparado)
+│   ├── LaunchQRController.lua   ← cliente deep link (maneja ModuleDisabled/Welcome)
+│   └── QRRedeemController.lua   ← cliente canje manual (maneja ModuleDisabled/Welcome)
 ├── tools/
 │   ├── set-mode.ps1             ← toggle Demo ⇄ Entrega (Windows/PowerShell) — NUEVO
 │   └── set-mode.sh              ← toggle Demo ⇄ Entrega (bash) — NUEVO
@@ -61,9 +62,13 @@ cómo alternar modos y dónde vive cada bandera (web `config.js` + Roblox
 | AGA_Inventories | `8105d853-ffe8-448d-815b-3960ddbc7edc` | Inventario global del jugador |
 | AGA_ScanEvents | `74c74a66-6c8f-443b-9d8e-ce964435434b` | Aperturas de QR (métricas) |
 | AGA_Rewards | `29b7f8fe-550c-40c4-975d-788645df339f` | Catálogo de recompensas |
+| **AGA_QR_Scans** | `562c913c-21a0-4759-8dfa-4ab8acb42eed` | Atribución de compra (escaneo de QR de botella → entrada a Roblox) |
+| **AGA_Game_Sessions** | `dd29d762-7e41-419b-b394-8259b8225dfc` | Sesiones de juego de los 4 places (heatmap/duración/concurrencia) |
 
-Endpoint **AGA Live Stats** (reporte): `…/endpoint/42064538-6bc8-4e6f-a386-070d929a9220`
-(POST `{companyId:"aga", experience:"all"|"street"|"activation"}`) — verificado ✓
+Endpoints (Sync, sin auth):
+- **AGA Dashboard** `…/endpoint/b8023eb1-f4dd-4581-9598-0149d22fef7f` — conversión QR + engagement (reporte.html nuevo).
+- **AGA QR Scan Register** `…/endpoint/863a5932-b44b-4f27-ab2f-1860e4b3d6ff` — lo llama la landing al escanear.
+- **AGA Live Stats** `…/endpoint/42064538-6bc8-4e6f-a386-070d929a9220` — reporte anterior (KPIs + canjes).
 
 ## Pendiente antes de producción
 

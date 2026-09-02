@@ -6,30 +6,32 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>AGA · Reporte de Métricas</title>
+<title>AGA · Dashboard de Métricas</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <!-- Feature Flags: ÚNICA fuente web. Ver config.js (Demo ⇄ Entrega). -->
 <script src="config.js"></script>
 <style>
-  :root{--rojo:#e11d2e;--naranja:#f97316;--texto:#cbd5e1;--blanco:#f5f7fa;--grafito:#14181f}
+  :root{--rojo:#e11d2e;--naranja:#f97316;--texto:#cbd5e1;--blanco:#f5f7fa;--grafito:#14181f;--verde:#22c55e}
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
   body{min-height:100vh;background:
       radial-gradient(ellipse at 20% 0%, rgba(225,29,46,.3), transparent 55%),
       linear-gradient(160deg,#0b0e13,#14181f 45%,#1c232e);
     color:var(--texto);padding:28px 18px}
-  .wrap{max-width:1080px;margin:0 auto}
-  .head{text-align:center;margin-bottom:20px}
+  .wrap{max-width:1180px;margin:0 auto}
+  .head{text-align:center;margin-bottom:18px}
   .logo{font-size:24px;font-weight:900;letter-spacing:5px;color:var(--blanco);text-transform:uppercase}
   .logo span{color:var(--rojo)}
   h1{font-size:26px;font-weight:800;color:var(--blanco);margin:2px 0}
   .sub{opacity:.85;font-size:13px}
-  .nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+  .nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
   .nav a{color:var(--blanco);font-weight:700;text-decoration:none;background:rgba(255,255,255,.07);padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);font-size:13px}
   .nav a.active{background:rgba(255,255,255,.92);color:#111}
   .toolbar{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:16px;background:rgba(255,255,255,.06);padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.12)}
   .toolbar label{font-weight:800;color:var(--naranja);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
   .toolbar select{padding:9px 12px;border:1px solid rgba(255,255,255,.25);border-radius:9px;font-weight:700;color:var(--blanco);background:#1a2029}
   .toolbar .tag{background:rgba(249,115,22,.15);border:1px dashed var(--naranja);color:var(--naranja);border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700}
+  .section-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:var(--blanco);margin:22px 0 12px;text-transform:uppercase;letter-spacing:1px}
+  .section-title::after{content:"";flex:1;height:1px;background:rgba(255,255,255,.14)}
   .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:16px}
   .kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:15px 16px}
   .kpi .n{font-size:28px;font-weight:800;color:var(--blanco)}
@@ -37,24 +39,32 @@
   .kpi .s{font-size:11px;color:#7d8ea3;margin-top:2px}
   .panel{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px;margin-bottom:16px}
   .panel h2{font-size:14px;color:var(--blanco);margin-bottom:12px}
-  .chart-box{position:relative;height:260px}
+  .chart-box{position:relative;height:250px}
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   th{background:rgba(255,255,255,.08);color:var(--naranja);text-align:left;padding:8px 10px;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px}
   td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.07);color:var(--texto);font-weight:600}
   tr:hover td{background:rgba(255,255,255,.03)}
-  .st{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:800;background:rgba(34,197,94,.18);color:#86efac}
-  .st-race{background:rgba(225,29,46,.18);color:#fca5a5}
-  .st-act{background:rgba(249,115,22,.18);color:#fdba74}
   .empty{color:#7d8ea3;font-weight:600;padding:14px;text-align:center}
   .err{display:none;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.4);border-radius:11px;padding:11px 13px;font-weight:700;margin-bottom:14px;text-align:center}
   .loading{color:var(--blanco);font-weight:700;text-align:center;padding:30px}
+  /* Heatmap */
+  .hm-wrap{overflow-x:auto}
+  .hm{display:grid;grid-template-columns:64px repeat(24,minmax(22px,1fr));gap:2px;min-width:680px}
+  .hm .c{display:flex;align-items:center;justify-content:center;font-size:9.5px;color:#0b0e13;font-weight:800;border-radius:3px;height:22px}
+  .hm .hdr{display:flex;align-items:center;justify-content:center;font-size:9px;color:#7d8ea3;height:22px}
+  .hm .lbl{display:flex;align-items:center;font-size:10px;color:var(--blanco);height:22px;font-weight:700;white-space:nowrap}
+  .hm-legend{display:flex;gap:6px;align-items:center;margin-top:10px;font-size:11px;color:var(--texto);flex-wrap:wrap}
+  .hm-legend .sw{width:16px;height:16px;border-radius:3px;display:inline-block}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:900px){.two-col{grid-template-columns:1fr}}
+  .stat-note{font-size:11.5px;color:#7d8ea3;margin-top:6px}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="head">
-      <div class="logo">A<span>G</span>A · REPORTE</div>
-      <div class="sub">Métricas de flujo por empresa y por experiencia</div>
+      <div class="logo">A<span>G</span>A · DASHBOARD</div>
+      <div class="sub">Conversión QR (atribución de compra) + Engagement general del juego</div>
     </div>
     <div class="nav" id="topNav">
       <a href="#" onclick="go('home');return false;">🏠 Inicio</a>
@@ -62,7 +72,6 @@
       <a href="#" onclick="go('reporte');return false;" class="active">📊 Reporte</a>
     </div>
 
-    <!-- Selector de empresa: visible solo en modo INTERNO (tenantSwitcherEnabled=true) -->
     <div class="toolbar" id="companyBar" style="display:flex">
       <label>Empresa:</label>
       <select id="companySelect">
@@ -72,7 +81,6 @@
       <span class="tag" id="tenantTag">companyId = aga</span>
     </div>
 
-    <!-- Filtro secundario: desglose por experiencia dentro de AGA -->
     <div class="toolbar" id="expBar" style="display:flex">
       <label>Experiencia:</label>
       <select id="expSelect">
@@ -87,24 +95,48 @@
     <div id="loading" class="loading">Cargando métricas…</div>
 
     <div id="dash" style="display:none">
-      <div class="kpis" id="kpis"></div>
+      <!-- ══════════════ A · CONVERSIÓN QR (VENTAS / ATRIBUCIÓN) ══════════════ -->
+      <div class="section-title">🔳 A · Conversión QR (Atribución de compra)</div>
+      <div class="kpis" id="kpisQr"></div>
       <div class="panel">
-        <h2>📈 Escaneos y Reclamos por día (filtro aplicado)</h2>
-        <div class="chart-box"><canvas id="chart"></canvas></div>
+        <h2>📈 Escaneos por Día (QR de botella → landing)</h2>
+        <div class="chart-box"><canvas id="chartQr"></canvas></div>
+      </div>
+
+      <!-- ══════════════ B · ENGAGEMENT GENERAL ══════════════ -->
+      <div class="section-title">🎮 B · Engagement general del juego</div>
+      <div class="kpis" id="kpisEng"></div>
+      <div class="two-col">
+        <div class="panel">
+          <h2>⏱️ Duración promedio de sesión por experiencia</h2>
+          <div style="overflow-x:auto"><table id="tblExp">
+            <thead><tr><th>Experiencia</th><th>Sesiones</th><th>Promedio</th></tr></thead>
+            <tbody></tbody>
+          </table></div>
+          <div class="stat-note">Retención: tiempo medio que un jugador permanece en cada experiencia (AGA_Game_Sessions).</div>
+        </div>
+        <div class="panel">
+          <h2>⏰ Flujo por hora del día (entradas de jugadores)</h2>
+          <div class="chart-box"><canvas id="chartFlow"></canvas></div>
+        </div>
       </div>
       <div class="panel">
-        <h2>🏁 Comparativa por experiencia (AGA)</h2>
-        <div style="overflow-x:auto"><table id="tblExp">
-          <thead><tr><th>Experiencia</th><th>Escaneos</th><th>Reclamos Únicos</th><th>Conversión</th><th>Jugadores</th></tr></thead>
-          <tbody></tbody>
-        </table></div>
+        <h2>🗓️ Mapa de calor de actividad — Día de la semana × Hora (horas pico)</h2>
+        <div class="hm-wrap"><div class="hm" id="heatmap"></div></div>
+        <div class="hm-legend">
+          <span>Menos actividad</span>
+          <span class="sw" style="background:#16222e"></span>
+          <span class="sw" style="background:#1d3a5f"></span>
+          <span class="sw" style="background:#24517f"></span>
+          <span class="sw" style="background:#e11d2e"></span>
+          <span class="sw" style="background:#f97316"></span>
+          <span class="sw" style="background:#fde047"></span>
+          <span>Más actividad</span>
+        </div>
       </div>
       <div class="panel">
-        <h2>🏷️ Últimos códigos canjeados</h2>
-        <div style="overflow-x:auto"><table id="tbl">
-          <thead><tr><th>Código</th><th>Experiencia</th><th>Roblox User</th><th>Recompensa</th><th>Fecha</th><th>Estado</th></tr></thead>
-          <tbody></tbody>
-        </table></div>
+        <h2>📅 Jugadores activos por día</h2>
+        <div class="chart-box"><canvas id="chartDaily"></canvas></div>
       </div>
     </div>
   </div>
@@ -121,12 +153,7 @@ function go(page) {
 }
 
 // ============================================================================
-//  FEATURE FLAGS (fuente: config.js → window.AGA_CONFIG)
-//  - qrRedemptionEnabled === false (Entrega AGA): oculta el link "Códigos QR".
-//  - tenantSwitcherEnabled === false (Entregable limpio AGA): fija companyId
-//    "aga", oculta el selector de empresa y deja solo el filtro por experiencia.
-//  reporte.html funciona 100% independiente: es el entregable principal del
-//  contrato (Dashboard de Métricas y Reportes).
+//  FEATURE FLAGS (config.js)
 // ============================================================================
 var AGACfg = (window.AGA && window.AGA.config) || { features: {}, tenants: {} };
 var qrEnabled = !!(AGACfg.features && AGACfg.features.qrRedemptionEnabled);
@@ -139,141 +166,188 @@ if (!tenantSwitcher) {
 }
 
 // ============================================================================
-//  REPORTE MULTI-TENANT + MULTI-EXPERIENCIA
-//  companyId: "aga" (AGA_*) | "logrus" (LGR_*)
-//  experience: "all" | "street" | "activation"  (solo dentro de AGA)
+//  DASHBOARD AGA — endpoint aga-dashboard (b8023eb1)
+//  qr:      { totalScans, uniqueConverted, scansPerDay[], convertedPerDay[] }
+//  engagement: { totalSessions, uniquePlayers, avgSessionSeconds,
+//                avgSessionByExp[], heatmap[{day,hour,sessions}], flowByHour[], dailyActive[] }
 // ============================================================================
-const ENDPOINTS = {
-  aga:    "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/42064538-6bc8-4e6f-a386-070d929a9220",
-  logrus: "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/b3b14430-daab-46e5-b6e3-46ac32526a37",
-};
+const ENDPOINT = "https://gateway.praxsuite.com/cc6ac8fa-e31c-421d-99af-15951a0e8a7a/endpoint/b8023eb1-f4dd-4581-9598-0149d22fef7f";
 const $ = id => document.getElementById(id);
 const urlParams = new URLSearchParams(location.search);
 let companyId = (urlParams.get("companyId") || "aga").toLowerCase();
 let experience = urlParams.get("exp") || "all";
-if (!ENDPOINTS[companyId]) companyId = "aga";
-// Entregable limpio AGA (tenantSwitcher=false): el reporte queda fijo en AGA,
-// aunque el link se abra con ?companyId=logrus (uso interno vía flag true).
 if (!tenantSwitcher) companyId = "aga";
 $("companySelect").value = companyId;
-$("expSelect").value = ENDPOINTS[experience] ? experience : "all";
-if (companyId !== "aga") {
-  $("expBar").style.display = "none";
-  experience = "all";
-}
-let chart = null;
+$("expSelect").value = ["all", "street", "activation"].includes(experience) ? experience : "all";
+if (companyId !== "aga") { $("expBar").style.display = "none"; experience = "all"; }
 
-function fmtDate(iso){
-  if(!iso) return "—";
-  const d = new Date(iso);
-  if(isNaN(d.getTime())) return iso;
-  return d.toLocaleString("es-AR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" });
-}
+let charts = { qr: null, flow: null, daily: null };
 
-async function load(){
+const DOW = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+async function load() {
   $("loading").style.display = "block";
   $("dash").style.display = "none";
   $("err").style.display = "none";
-  $("tenantTag").textContent = "companyId = " + companyId + (companyId === "aga" ? " · exp = " + experience : "");
+  $("tenantTag").textContent = "companyId = " + companyId;
+  $("expTag").textContent = "filtro: " + (experience === "all" ? "todas" : experience);
   let data;
   try {
-    const res = await fetch(ENDPOINTS[companyId], {
+    const res = await fetch(ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ companyId, experience }),
+      body: JSON.stringify({ companyId: "aga", experience }),
     });
     data = await res.json();
-  } catch(e){
-    data = { ok:false, error:String(e && e.message || e) };
+  } catch (e) {
+    data = { ok: false, error: String((e && e.message) || e) };
   }
   $("loading").style.display = "none";
-  if (!data || !data.ok){
+  if (!data || !data.ok) {
     $("err").style.display = "block";
-    $("err").textContent = "⚠️ " + (data && data.error || "Error al cargar métricas");
+    $("err").textContent = "⚠️ " + ((data && data.error) || "Error al cargar métricas");
     return;
   }
   $("dash").style.display = "block";
-  renderKpis(data.kpis || {});
-  renderChart(data.series || []);
-  renderExpTable(data.byExperience || []);
-  renderTable(data.recent || []);
+  renderQr(data.qr || {});
+  renderEngagement(data.engagement || {}, experience);
 }
 
-function renderKpis(k){
+function renderQr(q) {
   const items = [
-    { n: k.scans ?? 0, l: "Total de Escaneos", s: "aperturas de QR" },
-    { n: k.redeemedUnique ?? 0, l: "Códigos Reclamados Únicos", s: "items entregados" },
-    { n: (k.conversionRate ?? 0) + "%", l: "Tasa de Conversión", s: "reclamos / escaneos" },
-    { n: k.players ?? 0, l: "Jugadores", s: "usuarios únicos" },
-    { n: k.unlockedCars ?? 0, l: "Autos desbloqueados", s: "inventario global" },
-    { n: k.unlockedPets ?? 0, l: "Pets desbloqueadas", s: "inventario global" },
+    { n: q.totalScans ?? 0, l: "Total de Escaneos QR", s: "QRs de botella abiertos (landing)" },
+    { n: q.uniqueConverted ?? 0, l: "Usuarios convertidos", s: "entraron al juego vía QR" },
   ];
-  $("kpis").innerHTML = items.map(i =>
+  $("kpisQr").innerHTML = items.map(i =>
     '<div class="kpi"><div class="n">' + i.n + '</div><div class="l">' + i.l + '</div><div class="s">' + i.s + '</div></div>'
   ).join("");
-}
-
-function renderChart(series){
-  if (chart) chart.destroy();
-  const ctx = $("chart").getContext("2d");
-  chart = new Chart(ctx, {
-    type: "bar",
+  const series = (q.scansPerDay || []).map(d => d.date);
+  const scans = (q.scansPerDay || []).map(d => d.scans || 0);
+  const conv = (q.convertedPerDay || []).map(d => d.converted || 0);
+  if (charts.qr) charts.qr.destroy();
+  charts.qr = new Chart($("chartQr").getContext("2d"), {
+    type: "line",
     data: {
-      labels: series.map(s => s.date),
+      labels: series,
       datasets: [
-        { label: "Escaneos", data: series.map(s => s.scans || 0), backgroundColor: "rgba(225,29,46,.75)", borderRadius: 5 },
-        { label: "Reclamos", data: series.map(s => s.redeemed || 0), backgroundColor: "rgba(249,115,22,.85)", borderRadius: 5 },
+        { label: "Escaneos", data: scans, borderColor: "#f97316", backgroundColor: "rgba(249,115,22,.15)", fill: true, tension: .3, pointRadius: 3 },
+        { label: "Convertidos (entraron)", data: conv, borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.12)", fill: true, tension: .3, pointRadius: 3 },
       ],
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: "#f5f7fa", font: { weight: "bold" } } } },
-      scales: {
-        x: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
-        y: { beginAtZero: true, ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(255,255,255,.08)" } },
-      },
-    },
+    options: chartOpts("Día"),
   });
 }
 
-function renderExpTable(rows){
+function renderEngagement(eng, exp) {
+  const avg = Math.round((eng.avgSessionSeconds || 0) / 60);
+  const items = [
+    { n: eng.uniquePlayers ?? 0, l: "Jugadores únicos", s: "sesiones de juego (4 places AGA)" },
+    { n: eng.totalSessions ?? 0, l: "Sesiones totales", s: "entradas registradas" },
+    { n: avg + " min", l: "Duración promedio", s: "por sesión de juego" },
+  ];
+  $("kpisEng").innerHTML = items.map(i =>
+    '<div class="kpi"><div class="n">' + i.n + '</div><div class="l">' + i.l + '</div><div class="s">' + i.s + '</div></div>'
+  ).join("");
+
+  // Tabla duración por experiencia
   const tb = $("tblExp").querySelector("tbody");
-  if (!rows || !rows.length){
-    tb.innerHTML = '<tr><td colspan="5" class="empty">Sin datos por experiencia</td></tr>';
-    return;
+  const rows = (eng.avgSessionByExp || []).filter(r => exp === "all" || r.experience === exp);
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="3" class="empty">Sin datos</td></tr>';
+  } else {
+    tb.innerHTML = rows.map(r => {
+      const label = r.experience === "street" ? "🏎️ Carrera para Impresionar" : r.experience === "activation" ? "🎪 Activación AGA" : r.experience;
+      const mins = Math.round((r.avgSeconds || 0) / 60);
+      return "<tr><td><b>" + label + "</b></td><td>" + (r.sessions || 0) + "</td><td><b>" + mins + " min</b></td></tr>";
+    }).join("");
   }
-  tb.innerHTML = rows.map(r => {
-    const cls = r.experience === "street" ? "st-race" : "st-act";
-    const label = r.experience === "street" ? "🏎️ Carrera" : "🎪 Activación";
-    return "<tr><td><span class='st " + cls + "'>" + label + "</span></td><td>" + (r.scans || 0) + "</td><td>" + (r.redeemed || 0) + "</td><td>" + (r.conversionRate ?? 0) + "%</td><td>" + (r.players || 0) + "</td></tr>";
-  }).join("");
+
+  // Flujo por hora
+  const flow = eng.flowByHour || [];
+  if (charts.flow) charts.flow.destroy();
+  charts.flow = new Chart($("chartFlow").getContext("2d"), {
+    type: "bar",
+    data: {
+      labels: flow.map((_, i) => i + "h"),
+      datasets: [{ label: "Entradas", data: flow, backgroundColor: "rgba(225,29,46,.75)", borderRadius: 3 }],
+    },
+    options: chartOpts("Hora"),
+  });
+
+  // Heatmap día × hora
+  renderHeatmap(eng.heatmap || []);
+
+  // Jugadores activos por día
+  const daily = eng.dailyActive || [];
+  if (charts.daily) charts.daily.destroy();
+  charts.daily = new Chart($("chartDaily").getContext("2d"), {
+    type: "line",
+    data: {
+      labels: daily.map(d => d.date),
+      datasets: [
+        { label: "Jugadores únicos", data: daily.map(d => d.users || 0), borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.12)", fill: true, tension: .3 },
+        { label: "Sesiones", data: daily.map(d => d.sessions || 0), borderColor: "#f97316", backgroundColor: "rgba(249,115,22,.1)", fill: true, tension: .3 },
+      ],
+    },
+    options: chartOpts("Día"),
+  });
 }
 
-function renderTable(recent){
-  const tb = $("tbl").querySelector("tbody");
-  if (!recent.length){
-    tb.innerHTML = '<tr><td colspan="6" class="empty">Sin canjes aún</td></tr>';
+function chartOpts(xLabel) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: "#f5f7fa", font: { weight: "bold" } } } },
+    scales: {
+      x: { title: { display: !!xLabel, text: xLabel, color: "#7d8ea3" }, ticks: { color: "#cbd5e1", maxRotation: 60, autoSkip: true, maxTicksLimit: 14 }, grid: { display: false } },
+      y: { beginAtZero: true, ticks: { color: "#cbd5e1", precision: 0 }, grid: { color: "rgba(255,255,255,.08)" } },
+    },
+  };
+}
+
+function heatColor(v, max) {
+  if (max <= 0 || v <= 0) return "#16222e";
+  const t = v / max;
+  if (t < 0.2) return "#1d3a5f";
+  if (t < 0.4) return "#24517f";
+  if (t < 0.6) return "#e11d2e";
+  if (t < 0.85) return "#f97316";
+  return "#fde047";
+}
+
+function renderHeatmap(hm) {
+  const el = $("heatmap");
+  const max = Math.max(1, ...hm.map(c => c.sessions || 0));
+  let html = '<div class="lbl"></div>';
+  for (let h = 0; h < 24; h++) html += '<div class="hdr">' + (h % 6 === 0 ? h + "h" : "") + '</div>';
+  for (let d = 0; d < 7; d++) {
+    html += '<div class="lbl">' + DOW[d] + '</div>';
+    for (let h = 0; h < 24; h++) {
+      const cell = hm.find(c => c.day === d && c.hour === h);
+      const v = cell ? (cell.sessions || 0) : 0;
+      html += '<div class="c" style="background:' + heatColor(v, max) + '" title="' + DOW[d] + ' ' + h + ':00 — ' + v + ' sesiones">' + (v > 0 ? v : "") + '</div>';
+    }
+  }
+  el.innerHTML = html;
+}
+
+function loadTenant() {
+  if (companyId !== "aga") {
+    $("dash").style.display = "none";
+    $("err").style.display = "block";
+    $("err").textContent = "⚠️ El dashboard completo (QR + heatmap) es de AGA. Usá el reporte Logrus desde su propia URL.";
     return;
   }
-  tb.innerHTML = recent.map(r => {
-    const cls = r.experience === "street" ? "st-race" : "st-act";
-    return "<tr><td><b>" + (r.code || "—") + "</b></td><td><span class='st " + cls + "'>" + (r.experience === "street" ? "Carrera" : r.experience === "activation" ? "Activación" : "—") + "</span></td><td>" + (r.userId || "—") + "</td><td>" + (r.reward || "—") + "</td><td>" + fmtDate(r.claimedAt) + "</td><td><span class='st'>" + (r.status || "—") + "</span></td></tr>";
-  }).join("");
+  load();
 }
 
 $("companySelect").addEventListener("change", () => {
   companyId = $("companySelect").value;
-  if (companyId !== "aga") {
-    $("expBar").style.display = "none"; experience = "all";
-  } else {
-    $("expBar").style.display = "flex";
-    experience = $("expSelect").value;
-  }
+  experience = $("expSelect").value;
   const url = new URL(location.href);
   url.searchParams.set("companyId", companyId);
   url.searchParams.set("exp", experience);
   history.replaceState(null, "", url);
-  load();
+  loadTenant();
 });
 $("expSelect").addEventListener("change", () => {
   experience = $("expSelect").value;
@@ -282,8 +356,8 @@ $("expSelect").addEventListener("change", () => {
   history.replaceState(null, "", url);
   load();
 });
-load();
-setInterval(() => load(), 15000);
+loadTenant();
+setInterval(() => { if (companyId === "aga") load(); }, 15000);
 </script>
 </body>
 </html>

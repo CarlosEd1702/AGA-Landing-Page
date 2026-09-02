@@ -70,6 +70,23 @@ CREATE TABLE aga_inventories (
 | `AGA_Rewards` | `29b7f8fe-550c-40c4-975d-788645df339f` | Catálogo de recompensas (Item Type: Car/Pet/Cosmetic/Coins/Trophy; Rarity) |
 | `AGA_ScanEvents` | `74c74a66-6c8f-443b-9d8e-ce964435434b` | 1 fila por apertura de QR (métricas) |
 
+### Atribución QR y sesiones (Demo comercial 2026-09-02)
+
+| Tabla | UUID | Rol |
+|---|---|---|
+| `AGA_QR_Scans` | `562c913c-21a0-4759-8dfa-4ab8acb42eed` | **Atribución de compra**: 1 fila por QR de botella. Nace "1. Escaneado" (landing, sin UserId) y pasa a "2. Ingresó al Juego" cuando el jugador entra a Roblox con `launchData`. Columnas: Scan ID, Code, Company, Experience, Source (`bottle_qr`), Status, Roblox User Id, Place Id, Scanned At, Entered At. |
+| `AGA_Game_Sessions` | `dd29d762-7e41-419b-b394-8259b8225dfc` | **Sesiones de juego** de los 4 places AGA: entrada/salida por jugador para heatmap, duración promedio y picos. Columnas: Session ID, Roblox User Id, Place Id, Experience, Source (`bottle_qr`\|`direct`), Code, Entered At, Exited At, Duration Seconds. |
+
+**Flujo de la demo (sin recompensa por ahora):**
+1. QR físico (simula botella) → landing `?code=AGA-…` → POST **AGA QR Scan Register** (`863a5932-b44b-4f27-ab2f-1860e4b3d6ff`) → fila en `AGA_QR_Scans` Status "1. Escaneado".
+2. Deep link `launchData={qrCode, companyId:"aga", experience}` → Roblox lobby → servidor llama `AGACentralService:RecordQRAttribution` → la fila pasa a "2. Ingresó al Juego" (UserId + PlaceId + Entered At). UI: *"¡Bienvenido desde la promoción AGA!"*.
+3. **NO se otorga recompensa** — `GrantReward()` queda comentado/preparado (Add-On futuro). El claim con recompensa sigue cableado en `AGAQRRedeemService`.
+4. Cada place AGA registra entrada/salida en `AGA_Game_Sessions` (`AGAGameSessionsService`).
+
+**Dashboard** (`reporte.html`) → endpoint **AGA Dashboard** (`b8023eb1-f4dd-4581-9598-0149d22fef7f`):
+- A. Conversión QR: total escaneos, usuarios únicos convertidos, escaneos/convertidos por día.
+- B. Engagement: heatmap día×hora (horas pico), duración promedio por experiencia, flujo por hora, jugadores activos por día.
+
 ---
 
 ## 2) Endpoints (Sync, sin auth — para la web del QR)
@@ -77,7 +94,8 @@ CREATE TABLE aga_inventories (
 | Endpoint | Método/Body | Función |
 |---|---|---|
 | **AGA Live Stats** (`42064538-6bc8-4e6f-a386-070d929a9220`) | POST `{companyId:"aga", experience:"all"\|"street"\|"activation"}` | KPIs + serie diaria + **byExperience** (comparativa) + últimos canjes. Rechaza companyId ≠ aga. |
-| AGA QR Scan Register *(plantilla — clonar de EAS `0b62bc9c`)* | POST `{code, companyId, experience, placeId}` | Registra apertura en `AGA_ScanEvents` + upsert `AGA_Promotions` Status 1 |
+| **AGA Dashboard** (`b8023eb1-f4dd-4581-9598-0149d22fef7f`) | POST `{companyId:"aga"}` | Reporte completo: conversión QR (`AGA_QR_Scans`) + engagement (`AGA_Game_Sessions`: heatmap día×hora, duración por experiencia, flujo por hora, activos por día). |
+| **AGA QR Scan Register** (`863a5932-b44b-4f27-ab2f-1860e4b3d6ff`) | POST `{code, companyId, experience, placeId}` | La landing llama al escanear un QR de botella → crea/actualiza fila en `AGA_QR_Scans` Status "1. Escaneado" + Scanned At. |
 | AGA QR Mint *(plantilla — clonar de EAS `f43bce3d`)* | POST `{prefix, count, experience}` | Genera lote de códigos en `AGA_Promotions` |
 
 > **Nota anti-carrera entre juegos**: el consumo del código ocurre **en el backend**
@@ -87,27 +105,34 @@ CREATE TABLE aga_inventories (
 
 ---
 
-## 3) Módulo Luau compartido
+## 3) Módulos Luau compartidos
 
 `luau/AGACentralService.lua` — ModuleScript autocontenido (HttpService → API REST
 de Praxsuite, sin SDK interno). Incluirlo en `ServerScriptService` de **ambos** juegos.
+Expone además `RecordQRAttribution(params)` (atribución QR en `AGA_QR_Scans`, demo)
+y deja `GrantReward()` preparado/comentado (Add-On futuro).
+
+`luau/AGAGameSessionsService.lua` — registra entrada/salida de cada jugador en
+`AGA_Game_Sessions` (PlayerAdded/PlayerRemoving). Incluirlo en los **4 places** AGA
+(lobbies + pistas) e iniciar con su `Experience` ("street" | "activation").
+
+`luau/AGAModuleConfig.lua` — feature flags server-side (ver FEATURE_FLAGS.md).
 
 ```lua
 local AGACentral = require(ServerScriptService.AGACentralService)
 AGACentral:Init({ ApiKey = "sk_live_...", Places = { street = { PlaceId = "..." }, activation = { PlaceId = "..." } } })
 
--- Claim (valida + consume global + anti-duplicado)
-local res = AGACentral:ClaimCode({ code = "AGA-2026-0001", userId = tostring(player.UserId), experience = "street", placeId = tostring(game.PlaceId) })
--- res.Success / res.ErrorMessage / res.Reward
+-- Atribución QR (demo, sin recompensa): registrar que el usuario entró vía QR
+local attr = AGACentral:RecordQRAttribution({ code = "AGA-2026-0001", userId = tostring(player.UserId), experience = "street", placeId = tostring(game.PlaceId), source = "bottle_qr" })
+
+-- Claim con recompensa (cableado; desactivado en la demo — GrantReward preparado)
+-- local res = AGACentral:ClaimCode({ code = "AGA-2026-0001", userId = tostring(player.UserId), experience = "street", placeId = tostring(game.PlaceId) })
 
 -- Inventario global (ambos juegos ven lo mismo)
 local inv = AGACentral:GetInventory(player.UserId)          -- crea fila si no existe
 AGACentral:AddCoins(player.UserId, 500)
 AGACentral:AddTrophies(player.UserId, 1)
 AGACentral:UnlockItem(player.UserId, "cars", "AGA-Turbo-01") -- respeta límite
-
--- Límite compartido
-local lim = AGACentral:CheckInventoryLimit(player.UserId, "cars") -- { allowed, current, limit }
 ```
 
 Config pendiente por deploy:

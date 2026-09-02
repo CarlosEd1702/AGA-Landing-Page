@@ -154,7 +154,7 @@ function AGAQRRedeemService:claimForPlayer(player, request)
 		return { Success = false, ErrorMessage = "El código ingresado no existe." }
 	end
 
-	-- 1) Recompensa local definida para este código (QRPromosConfig)
+	-- 1) Validar el código contra el lote local (mensajes claros). NO consume nada.
 	local reward = config.QRPromosConfig and config.QRPromosConfig.GetReward(code)
 	if not reward then
 		return { Success = false, ErrorMessage = "El código ingresado no existe." }
@@ -170,48 +170,50 @@ function AGAQRRedeemService:claimForPlayer(player, request)
 		}
 	end
 
-	-- 2) Consumo CENTRAL (anti duplicado entre ambos juegos + inventario global)
+	-- ──────────────────────────────────────────────────────────────────────────
+	-- 2) DEMO AGA — ATRIBUCIÓN (sin recompensa por ahora)
+	--    El QR de la botella simula la compra: registramos en AGA_QR_Scans que
+	--    este usuario entró vía QR (UserId + PlaceId + Entered At + source bottle_qr).
+	--    La UI muestra el welcome; NO se otorgan monedas ni items todavía.
+	-- ──────────────────────────────────────────────────────────────────────────
 	local central = config.Central
-	local claimRes = central:ClaimCode({
+	local attr = central:RecordQRAttribution({
 		code = code,
 		userId = tostring(player.UserId),
-		username = player.Name,
 		experience = config.Experience,
 		placeId = tostring(game.PlaceId),
+		source = "bottle_qr",
 	})
-	if not claimRes.Success then
-		return { Success = false, ErrorMessage = claimRes.ErrorMessage or "No se pudo canjear el código." }
+	if not attr.Success then
+		return {
+			Success = false,
+			ModuleDisabled = attr.ModuleDisabled == true,
+			ErrorMessage = attr.ErrorMessage or "No se pudo registrar tu entrada por QR.",
+		}
 	end
 
-	-- 3) Acreditar monedas en el perfil LOCAL del lobby (con el que juega ahora)
-	local coins = reward.Coins or 0
-	local addOk = false
-	if coins > 0 then
-		local ok, result = pcall(function()
-			return config.PlayerDataService.addCoins(player, coins)
-		end)
-		addOk = ok and result ~= nil
-	end
-
-	-- 4) Registrar crédito en el inventario CENTRAL (AGA_Inventories, global)
-	local centralOk = false
-	if coins > 0 then
-		local okAdd = pcall(function()
-			return central:AddCoins(tostring(player.UserId), coins)
-		end)
-		centralOk = okAdd
-	end
+	-- 3) GRANT REWARD (PREPARADO — Add-On futuro)
+	--    Cuando AGA decida activar recompensas por QR, descomentar el bloque y
+	--    acreditar local (PlayerDataService.addCoins) + central (AddCoins/UnlockItem):
+	--
+	--    local coins = reward.Coins or 0
+	--    if coins > 0 then
+	--        config.PlayerDataService.addCoins(player, coins)          -- perfil LOCAL
+	--        central:AddCoins(tostring(player.UserId), coins)          -- inventario CENTRAL
+	--    end
+	--    -- items futuros → central:UnlockItem(userId, "cars"/"pets", itemKey)
+	--    return { Success = true, Code = code, Coins = coins, RewardLines = {...} }
+	--
+	-- Mientras tanto: solo welcome + atribución.
 
 	return {
 		Success = true,
+		Welcome = true,
 		Code = code,
-		Coins = coins,
+		Message = "¡Bienvenido desde la promoción AGA!",
+		RewardLines = { "¡Bienvenido desde la promoción AGA! 🎉" },
 		Experience = config.Experience,
-		RewardLines = {
-			"💧 +" .. coins .. " Coins",
-		},
-		LocalApplied = addOk,
-		CentralApplied = centralOk,
+		Coins = 0,
 	}
 end
 

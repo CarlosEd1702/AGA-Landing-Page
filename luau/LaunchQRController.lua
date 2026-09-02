@@ -129,7 +129,11 @@ local function openRedeemWithCode(code, claimNow)
 			-- Sin bridge: feedback mínimo
 			if feedback then
 				if result.Success then
-					feedback.Text = "✅ +" .. tostring(result.Coins or 0) .. " Coins"
+					if result.Welcome then
+						feedback.Text = "🎉 " .. tostring(result.Message or "¡Bienvenido desde la promoción AGA!")
+					else
+						feedback.Text = "✅ +" .. tostring(result.Coins or 0) .. " Coins"
+					end
 				else
 					feedback.Text = "❌ " .. tostring(result.ErrorMessage or "Error")
 				end

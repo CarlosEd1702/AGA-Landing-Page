@@ -133,10 +133,18 @@ local function doClaim(code)
 		return
 	end
 	if typeof(result) == "table" and result.Success then
-		if feedback then feedback.Text = "✅ +" .. tostring(result.Coins or 0) .. " Coins" end
-		task.wait(0.4)
-		setPanelVisible(false)
-		showReward(result)
+		if result.Welcome then
+			if feedback then feedback.Text = "🎉 " .. tostring(result.Message or "¡Bienvenido desde la promoción AGA!") end
+			task.delay(2.5, function()
+				setPanelVisible(false)
+				restoreGuis()
+			end)
+		else
+			if feedback then feedback.Text = "✅ +" .. tostring(result.Coins or 0) .. " Coins" end
+			task.wait(0.4)
+			setPanelVisible(false)
+			showReward(result)
+		end
 	else
 		if feedback then feedback.Text = tostring(result and result.ErrorMessage or "Error") end
 	end

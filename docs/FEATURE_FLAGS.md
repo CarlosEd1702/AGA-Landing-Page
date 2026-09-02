@@ -119,23 +119,26 @@ apaga, `reporte.html` puede mostrar un aviso. No afecta a Roblox.
 
 ## 4) Runbook de la Demo Técnica (sesión con AGA)
 
-Objetivo: mostrar la dinámica **QR físico → canje en Roblox → impacto en el
-reporte en tiempo real**, para incentivar la contratación del Add-On.
+> **Demo comercial 2026-09-02**: el QR SÍ se muestra y funciona de punta a punta
+> (landing + Roblox), pero **NO entrega recompensa** por ahora. Al entrar registra
+> la atribución en `AGA_QR_Scans` (Status "2. Ingresó al Juego") y la UI muestra
+> *"¡Bienvenido desde la promoción AGA!"*. El claim con recompensa queda cableado
+> (`GrantReward()` preparado) para cuando AGA decida activarlo.
 
 | # | Paso | Dónde | Qué se ve |
 |---|---|---|---|
 | 1 | Verificar `qrRedemptionEnabled=true` (web y Roblox) | `config.js` + `AGAModuleConfig` | — |
 | 2 | Abrir `index.html` | Navegador | Vista Demo con input "Escribí tu código" |
-| 3 | Ingresar código de prueba (p. ej. `AGA-2026-0001`) | `index.html` | Chip de código + botones "Abrir en Roblox" |
-| 4 | (Opcional) Escanear QR de `qr.html` | Celular | Abre la landing con `?code=...` precargado |
-| 5 | Pulsar "Abrir en Roblox" → deep link | Roblox | Entra al Lobby con el modal de reclamo abierto |
-| 6 | Confirmar el canje | Lobby (server) | `+500 Coins` locales + inventario central `AGA_Inventories` |
-| 7 | Abrir `reporte.html` | Navegador (otra pestaña) | KPI "Códigos Reclamados Únicos" y serie diaria suben (auto-refresh 15 s) |
-| 8 | Cerrar la demo | — | Poner flags en `false` (sección 3) y republicar |
+| 3 | Ingresar/escanear `AGA-2026-0001` | `index.html` / `qr.html` | POST → `AGA_QR_Scans` Status "1. Escaneado" |
+| 4 | Pulsar "Abrir en Roblox" → deep link | Roblox | Entra al Lobby y muestra el welcome |
+| 5 | El servidor registra la atribución | Lobby (server) | `AGA_QR_Scans` → Status "2. Ingresó al Juego" + UserId (sin +Coins) |
+| 6 | Abrir `reporte.html` | Navegador (otra pestaña) | Sección A (conversión QR) y Sección B (heatmap/duración/concurrencia) reflejan el movimiento (auto-refresh 15 s) |
+| 7 | Cerrar la demo | — | Poner flags en `false` (sección 3) y republicar |
 
-> **Nota**: `reporte.html` consulta el endpoint sync `aga-live-stats`
-> (`42064538-…`), que ya devuelve KPIs, serie diaria, comparativa por experiencia
-> y últimos canjes — no necesita recargar manual: refresca cada 15 s.
+> **Nota**: `reporte.html` consume el endpoint **AGA Dashboard**
+> (`b8023eb1-…`) que devuelve conversión QR (`AGA_QR_Scans`) + engagement
+> (`AGA_Game_Sessions`: heatmap día×hora, duración por experiencia, flujo por
+> hora, activos por día).
 
 ### Chequeo rápido del enforcement (Roblox, Server)
 

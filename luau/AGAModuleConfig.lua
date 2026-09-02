@@ -43,7 +43,7 @@ local AGAModuleConfig = {
 		-- ESTADO POR DEFECTO DEL REPO (main) = ENTREGA → false.
 		-- Para demo: pwsh tools/set-mode.ps1 demo (o bash tools/set-mode.sh demo).
 		qrRedemption = {
-			Enabled = false, -- ⚠️ SINCRONIZAR con web/config.js
+			Enabled = true, -- ⚠️ SINCRONIZAR con web/config.js
 		},
 
 		-- ── Módulo contratado: "Dashboard de Métricas y Reportes" ────────────

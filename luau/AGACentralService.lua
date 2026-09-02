@@ -98,6 +98,8 @@ local DEFAULT_CONFIG = {
 		Inventories = "8105d853-ffe8-448d-815b-3960ddbc7edc", -- AGA_Inventories (jugador global)
 		ScanEvents  = "74c74a66-6c8f-443b-9d8e-ce964435434b", -- AGA_ScanEvents (aperturas)
 		Rewards     = "29b7f8fe-550c-40c4-975d-788645df339f", -- AGA_Rewards (catálogo)
+		QRScans     = "562c913c-21a0-4759-8dfa-4ab8acb42eed", -- AGA_QR_Scans (atribución escaneo→entrada)
+		GameSessions = "dd29d762-7e41-419b-b394-8259b8225dfc", -- AGA_Game_Sessions (sesiones de juego)
 	},
 
 	-- Experiencias AGA: cada una con su Lobby (destino de deep link / reclamo QR)
@@ -514,5 +516,107 @@ end
 function AGACentralService:GetInventoryForPlayer(player)
 	return self:GetInventory(player and player.UserId)
 end
+
+-- ============================================================================
+-- ATRIBUCIÓN QR (Demo AGA) — registrar que un usuario entró vía QR
+-- ============================================================================
+-- El QR de la botella es la "compra simulada": cuando el jugador entra a Roblox
+-- con launchData { qrCode, companyId:"aga" }, el servidor registra la atribución
+-- en AGA_QR_Scans (UserId + PlaceId + Entered At + source bottle_qr).
+--
+-- NO otorga recompensa por ahora (el Add-On de recompensas es futuro): el flujo
+-- queda preparado en AGACentralService:GrantReward() (ver abajo, comentado).
+-- params: { code, userId, experience, placeId, source? }
+function AGACentralService:RecordQRAttribution(params)
+	if not config then return { Success = false, ErrorMessage = "AGACentral no inicializado." } end
+	if not moduleEnabled("qrRedemption") then
+		return { Success = false, ModuleDisabled = true, ErrorMessage = "El canje por QR no está disponible en esta experiencia." }
+	end
+	local code = tostring(params.code or ""):upper():gsub("%s+", "")
+	local userId = tostring(params.userId or "")
+	if code == "" or userId == "" then
+		return { Success = false, ErrorMessage = "Código o usuario inválido." }
+	end
+	local experience = tostring(params.experience or "street")
+	local placeId = tostring(params.placeId or "")
+	if placeId == "" and config.Places[experience] then
+		placeId = config.Places[experience].PlaceId
+	end
+	local source = tostring(params.source or "bottle_qr")
+	local now = os.date("!%Y-%m-%dT%H:%M:%SZ")
+
+	-- 1) ¿Este usuario ya fue atribuido con este código? (anti duplicado por sesión)
+	local q = queryRows(config.Tables.QRScans, {
+		{ field = "Code", op = "eq", value = code },
+		{ field = "Roblox User Id", op = "eq", value = userId },
+	}, 1)
+	if q.ok and q.found then
+		return { Success = true, AlreadyAttributed = true, Code = code }
+	end
+
+	-- 2) ¿Existe el escaneo (web) de este código sin dueño todavía? → marcarlo.
+	local q2 = queryRows(config.Tables.QRScans, {
+		{ field = "Code", op = "eq", value = code },
+	}, 5)
+	if q2.ok and q2.found then
+		for _, row in ipairs(q2.rows) do
+			local owner = tostring(row["Roblox User Id"] or "")
+			if owner == "" then
+				local upd = mutate(config.Tables.QRScans, {
+					type = "update",
+					table = "t",
+					set = {
+						["Roblox User Id"] = userId,
+						["Place Id"] = placeId,
+						["Entered At"] = now,
+						Status = "2. Ingresó al Juego",
+					},
+					where = {
+						{ field = "Scan ID", op = "eq", value = tostring(row["Scan ID"] or row.ID or "") },
+					},
+				})
+				return { Success = upd.ok, Code = code, ScanId = tostring(row["Scan ID"] or row.ID or "") }
+			end
+		end
+	end
+
+	-- 3) No había escaneo web previo (deep link directo): crear la fila atribuida.
+	local scanId = HttpService:GenerateGUID(false)
+	local ins = mutate(config.Tables.QRScans, {
+		type = "insert",
+		table = "t",
+		values = { {
+			["Scan ID"] = scanId,
+			Code = code,
+			Company = "aga",
+			Experience = experience,
+			Source = source,
+			Status = "2. Ingresó al Juego",
+			["Roblox User Id"] = userId,
+			["Place Id"] = placeId,
+			["Scanned At"] = now,
+			["Entered At"] = now,
+		} },
+		returning = false,
+	})
+	if not ins.ok then
+		return { Success = false, ErrorMessage = "No se pudo registrar la atribución." }
+	end
+	return { Success = true, Code = code, ScanId = scanId, Created = true }
+end
+
+-- ============================================================================
+-- GRANT REWARD (PREPARADO — Add-On futuro)
+-- ============================================================================
+-- Cuando AGA decida activar recompensas por QR (monedas/items), descomentar el
+-- cuerpo de esta función y llamarla desde el flujo de canje. Hoy el flujo de la
+-- demo registra SOLO la atribución (RecordQRAttribution) sin entregar nada.
+--
+-- function AGACentralService:GrantReward(userId, code, experience)
+-- 	local reward = ... -- resolver recompensa del catálogo AGA_Rewards por code
+-- 	if not reward then return { Success = false, ErrorMessage = "Recompensa no encontrada." } end
+-- 	-- monedas / items → AGA_Inventories (AddCoins / UnlockItem) + AGA_ScanEvents
+-- 	return { Success = true }
+-- end
 
 return AGACentralService
