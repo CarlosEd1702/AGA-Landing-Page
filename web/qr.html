@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>AGA · Galería de QR</title>
+<style>
+  :root{--rojo:#e11d2e;--naranja:#f97316;--texto:#cbd5e1;--blanco:#f5f7fa;--grafito:#14181f}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+  body{min-height:100vh;background:
+      radial-gradient(ellipse at 20% 0%, rgba(225,29,46,.3), transparent 55%),
+      linear-gradient(160deg,#0b0e13,#14181f 45%,#1c232e);
+    color:var(--texto);padding:32px 20px}
+  .wrap{max-width:1120px;margin:0 auto}
+  .head{text-align:center;color:var(--blanco);margin-bottom:22px}
+  .logo{font-size:24px;font-weight:900;letter-spacing:5px;text-transform:uppercase}
+  .logo span{color:var(--rojo)}
+  h1{font-size:28px;font-weight:800;margin:4px 0}
+  .sub{opacity:.85;font-size:13px}
+  .nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+  .nav a{color:var(--blanco);font-weight:700;text-decoration:none;background:rgba(255,255,255,.07);padding:8px 16px;border-radius:10px;border:1px solid rgba(255,255,255,.18);font-size:13px}
+  .nav a.active{background:rgba(255,255,255,.92);color:#111}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+  .card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:14px;text-align:center;transition:transform .12s,border-color .15s}
+  .card:hover{border-color:var(--naranja);transform:translateY(-2px)}
+  .card img{width:100%;max-width:170px;height:auto;border-radius:10px;background:#fff}
+  .code{font-weight:800;color:var(--blanco);letter-spacing:1px;font-size:12.5px;margin:10px 0 8px;word-break:break-all}
+  .exp-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:10.5px;font-weight:800;margin-bottom:8px}
+  .exp-street{background:rgba(225,29,46,.2);color:#fca5a5}
+  .exp-activation{background:rgba(249,115,22,.2);color:#fdba74}
+  .btn{display:block;width:100%;padding:9px;border:none;border-radius:9px;font-size:12.5px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#e11d2e,#f97316);color:#fff;margin-top:4px}
+  .btn-web{background:rgba(255,255,255,.1);margin-top:6px}
+  .note{margin-top:22px;text-align:center;color:#7d8ea3;font-size:12px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="head">
+      <div class="logo">A<span>G</span>A</div>
+      <h1>GALERÍA DE QR</h1>
+      <div class="sub">Lote de prueba — cada QR abre el Lobby de su experiencia con el código precargado</div>
+    </div>
+    <div class="nav">
+      <a href="#" onclick="go('home');return false;">🏠 Landing</a>
+      <a href="#" onclick="go('qr');return false;" class="active">🔳 Códigos QR</a>
+      <a href="#" onclick="go('reporte');return false;">📊 Reporte</a>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="note">⚡ Códigos de prueba AGA-2026-… · Carrera → Lobby 123585082660675 · Activación → Lobby 99086248105983</div>
+  </div>
+<script>
+function go(page) {
+  var isPrax = location.hostname.indexOf("praxsuite.app") !== -1;
+  var routes = {
+    home:    isPrax ? "/" : "index.html",
+    qr:      isPrax ? "/qr" : "qr.html",
+    reporte: isPrax ? "/reporte" : "reporte.html"
+  };
+  window.location.href = routes[page] || page;
+}
+
+const PLACES = {
+  street:     { id: "123585082660675", name: "Carrera para Impresionar" },
+  activation: { id: "99086248105983", name: "Activación AGA" }
+};
+
+// Códigos demo por experiencia (lote de prueba AGA-2026)
+const CODES = [
+  { code: "AGA-2026-0001", exp: "street" },
+  { code: "AGA-2026-0002", exp: "street" },
+  { code: "AGA-2026-0003", exp: "street" },
+  { code: "AGA-2026-0004", exp: "activation" },
+  { code: "AGA-2026-0005", exp: "activation" },
+  { code: "AGA-2026-0006", exp: "activation" },
+];
+
+const DeepLinkHandler = (() => {
+  "use strict";
+  const isMobile = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) || /Android/i.test(navigator.userAgent);
+  const buildWebUrl = (placeId, ld) => "https://www.roblox.com/games/" + encodeURIComponent(String(placeId)) + "?launchData=" + encodeURIComponent(JSON.stringify(ld));
+  const open = (placeId, launchData) => {
+    const ld = encodeURIComponent(JSON.stringify(launchData || {}));
+    if (isMobile()) {
+      window.location.href = "roblox://navigation/game_details?gameId=" + encodeURIComponent(String(placeId)) + "&launchData=" + ld;
+      setTimeout(() => { window.location.href = buildWebUrl(placeId, launchData); }, 2500);
+      return;
+    }
+    window.open(buildWebUrl(placeId, launchData), "_blank", "noopener");
+  };
+  return { open };
+})();
+
+const grid = document.getElementById("grid");
+const BASE_LANDING = "https://aga.praxsuite.app/?code="; // TODO: dominio real cuando se publique la app
+for (const c of CODES) {
+  const exp = PLACES[c.exp];
+  const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=6&data=" + encodeURIComponent(BASE_LANDING + c.code + "&exp=" + c.exp);
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML =
+    '<span class="exp-badge ' + (c.exp === "street" ? "exp-street" : "exp-activation") + '">' + (c.exp === "street" ? "🏎️ Carrera" : "🎪 Activación") + "</span>" +
+    '<img src="' + qrUrl + '" alt="QR ' + c.code + '" loading="lazy">' +
+    '<div class="code">' + c.code + "</div>" +
+    '<button class="btn" data-code="' + c.code + '" data-exp="' + c.exp + '">🚀 ABRIR EN ROBLOX</button>' +
+    '<button class="btn btn-web" data-code="' + c.code + '" data-exp="' + c.exp + '" data-web="1">🌐 Navegador web</button>';
+  grid.appendChild(card);
+}
+grid.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-code]");
+  if (!btn) return;
+  const code = btn.getAttribute("data-code");
+  const exp = btn.getAttribute("data-exp");
+  const place = PLACES[exp] || PLACES.street;
+  const launch = { qrCode: code, companyId: "aga", experience: exp };
+  if (btn.getAttribute("data-web")) {
+    window.open("https://www.roblox.com/games/" + place.id + "?launchData=" + encodeURIComponent(JSON.stringify(launch)), "_blank", "noopener");
+  } else {
+    DeepLinkHandler.open(place.id, launch);
+  }
+});
+</script>
+</body>
+</html>

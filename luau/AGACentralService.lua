@@ -61,10 +61,17 @@ local DEFAULT_CONFIG = {
 		Rewards     = "29b7f8fe-550c-40c4-975d-788645df339f", -- AGA_Rewards (catálogo)
 	},
 
-	-- Identificadores de las 2 experiencias (placeIds publicados)
+	-- Experiencias AGA: cada una con su Lobby (destino de deep link / reclamo QR)
+	-- y su Pista (a donde teleporta el lobby).
 	Places = {
-		street     = { PlaceId = "108987866733849", Name = "Carrera para Impresionar" }, -- TODO: confirmar placeId
-		activation = { PlaceId = "0",                Name = "Activación AGA" },            -- TODO: rellenar
+		street = {
+			PlaceId = "123585082660675", Name = "Carrera para Impresionar", Lobby = "123585082660675",
+			Track = "93293966670401",
+		},
+		activation = {
+			PlaceId = "99086248105983", Name = "Activación AGA", Lobby = "99086248105983",
+			Track = "108987866733849",
+		},
 	},
 
 	-- Límite compartido de inventario por categoría
@@ -90,8 +97,9 @@ local serverSide = false
 
 local function postJson(url, body, headers)
 	local okPost, result = pcall(function()
-		local payload = HttpService:JSONEncode(body)
-		return HttpService:PostAsync(url, payload, Enum.HttpContentType.ApplicationJson, false, headers)
+		-- PostAsync con HttpContentType.ApplicationJson ya añade Content-Type;
+		-- NO incluir "Content-Type" en headers (Roblox lo rechaza).
+		return HttpService:PostAsync(url, HttpService:JSONEncode(body), Enum.HttpContentType.ApplicationJson, false, headers)
 	end)
 	if not okPost then
 		return { ok = false, error = tostring(result) }
@@ -106,6 +114,7 @@ local function postJson(url, body, headers)
 end
 
 -- Query genérica: { ok, rows=tabla, found=boolean }
+-- Formato where de PraxQL: { field, op, value }
 local function queryRows(tableId, where, limit)
 	local url = config.GatewayUrl .. "/query"
 	local body = {
@@ -118,13 +127,15 @@ local function queryRows(tableId, where, limit)
 		},
 	}
 	local headers = {
-		["Content-Type"] = "application/json",
 		["Authorization"] = "Bearer " .. config.ApiKey,
 	}
 	local res = postJson(url, body, headers)
 	if not res.ok then return res end
+	-- REST devuelve { data: [fila] }: decoded = { data = {...} }, el array está en .data
 	local d = res.data or {}
-	local rows = d.rows or {}
+	local payload = d
+	if type(d.data) == "table" then payload = d.data end
+	local rows = (type(payload) == "table") and payload or {}
 	return { ok = true, rows = rows, found = #rows > 0, data = d }
 end
 
@@ -135,7 +146,6 @@ local function mutate(tableId, mutation)
 		mutation = mutation,
 	}
 	local headers = {
-		["Content-Type"] = "application/json",
 		["Authorization"] = "Bearer " .. config.ApiKey,
 	}
 	local res = postJson(url, body, headers)
@@ -201,7 +211,7 @@ end
 function AGACentralService:GetInventory(userId)
 	userId = tostring(userId)
 	local q = queryRows(config.Tables.Inventories, {
-		{ column = "Roblox User Id", operator = "eq", value = userId },
+		{ field = "Roblox User Id", op = "eq", value = userId },
 	}, 1)
 	if not q.ok then return q end
 
@@ -331,7 +341,7 @@ function AGACentralService:FindCode(code)
 	code = tostring(code or ""):upper():gsub("%s+", "")
 	if code == "" then return { ok = true, found = false, row = nil } end
 	local q = queryRows(config.Tables.Promotions, {
-		{ column = "Code", operator = "eq", value = code },
+		{ field = "Code", op = "eq", value = code },
 	}, 1)
 	if not q.ok then return q end
 	if not q.found then return { ok = true, found = false, row = nil } end
