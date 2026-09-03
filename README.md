@@ -6,6 +6,9 @@ acreditada en un **inventario centralizado** (Praxsuite) compartido por ambos ju
 
 > ⚠️ **Repositorio PRIVADO**: referencia el WorkspaceId de Praxsuite y endpoints
 > internos. No exponer.
+>
+> 🤖 **¿Sos un agente (DeepSeek/Claude)?** Leé [`AGENTS.md`](AGENTS.md) y
+> [`docs/CONVENTIONS.md`](docs/CONVENTIONS.md) antes de tocar código.
 
 ## 🚦 Módulos y Feature Flags (Demo ⇄ Entrega)
 
