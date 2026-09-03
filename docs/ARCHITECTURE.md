@@ -76,6 +76,7 @@ CREATE TABLE aga_inventories (
 |---|---|---|
 | `AGA_QR_Scans` | `562c913c-21a0-4759-8dfa-4ab8acb42eed` | **Atribución de compra**: 1 fila por QR de botella. Nace "1. Escaneado" (landing, sin UserId) y pasa a "2. Ingresó al Juego" cuando el jugador entra a Roblox con `launchData`. Columnas: Scan ID, Code, Company, Experience, Source (`bottle_qr`), Status, Roblox User Id, Place Id, Scanned At, Entered At. |
 | `AGA_Game_Sessions` | `dd29d762-7e41-419b-b394-8259b8225dfc` | **Sesiones de juego** de los 4 places AGA: entrada/salida por jugador para heatmap, duración promedio y picos. Columnas: Session ID, Roblox User Id, Place Id, Experience, Source (`bottle_qr`\|`direct`), Code, Entered At, Exited At, Duration Seconds. |
+| `AGA_AdCampaigns` | `da6a2bd2-0d67-4020-962b-0f137b5cb5ae` | **Inversión publicitaria (Roblox Ads)** — reporte manual por campaña. Columnas: Campaign ID, Company, Experience, Ad Set, Start Date, End Date, Budget, Spent, Impressions, Clicks, Plays, Play Rate, Robux Earned. Robux = 0 hasta que haya tienda/skins. |
 
 **Flujo de la demo (sin recompensa por ahora):**
 1. QR físico (simula botella) → **URL DIRECTA a Roblox** (sin subdominio intermedio):
@@ -89,6 +90,7 @@ CREATE TABLE aga_inventories (
 **Dashboard** (`reporte.html`) → endpoint **AGA Dashboard** (`b8023eb1-f4dd-4581-9598-0149d22fef7f`):
 - **A. Conversión QR** (`AGA_QR_Scans`): demo del Add-On — admite datos de ejemplo (simulados) para el pitch.
 - **B. Engagement REAL** (`AGA_RaceSessions` + `AGA_RaceParticipants` + `AGA_DailyRaceSummary`): heatmap día×hora (inicios de carrera), duración promedio por experiencia, flujo por hora, jugadores únicos y activos por día. `source: "aga_racesessions_real"`.
+- **C. Inversión publicitaria** (`AGA_AdCampaigns`): KPIs y tabla de campañas Roblox Ads (gasto, impresiones, clicks, plays, %play/clicks, Robux=0) para ver el progreso del crecimiento de interacciones (p. ej. 7/8→24/8: impresiones 120K→295K, plays 406→2972).
 
 ---
 

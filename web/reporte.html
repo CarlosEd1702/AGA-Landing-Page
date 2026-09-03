@@ -139,6 +139,21 @@
         <h2>📅 Jugadores activos por día</h2>
         <div class="chart-box"><canvas id="chartDaily"></canvas></div>
       </div>
+
+      <!-- ══════════════ C · INVERSIÓN PUBLICITARIA (ADS MANAGER) ══════════════ -->
+      <div class="section-title">📣 C · Inversión publicitaria (Roblox Ads) <span style="font-size:10px;color:#7d8ea3;text-transform:none;letter-spacing:0">— Carrera para Impresionar · reporte manual</span></div>
+      <div class="kpis" id="kpisAds"></div>
+      <div class="panel">
+        <h2>📣 Campañas y progreso (crecimiento de interacciones)</h2>
+        <div style="overflow-x:auto"><table id="tblAds">
+          <thead><tr>
+            <th>Campaña</th><th>Inicio</th><th>Fin</th><th>Gasto</th>
+            <th>Impresiones</th><th>Clicks</th><th>Plays</th><th>% play/clicks</th><th>Robux</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table></div>
+        <div class="stat-note">Fuente: AGA_AdCampaigns (reporte Roblox Ads, carga manual). Robux = 0 porque la experiencia aún no vende skins/tienda.</div>
+      </div>
     </div>
   </div>
 
@@ -212,6 +227,7 @@ async function load() {
   $("dash").style.display = "block";
   renderQr(data.qr || {});
   renderEngagement(data.engagement || {}, experience);
+  renderAds((data.ads || {}), experience);
 }
 
 function renderQr(q) {
@@ -292,6 +308,63 @@ function renderEngagement(eng, exp) {
     },
     options: chartOpts("Día"),
   });
+}
+
+function escHtml(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function fmtNum(n) { return (Number(n) || 0).toLocaleString("es-AR"); }
+function fmtMoney(n) { return "$" + (Number(n) || 0).toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtDateStr(s) {
+  if (!s) return "—";
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? String(s).slice(0, 10) : d.toISOString().slice(0, 10);
+}
+
+function renderAds(ads, exp) {
+  // KPI acumulados de inversión publicitaria (todas las campañas o filtradas por exp)
+  var list = (ads.campaigns || []).filter(function (c) {
+    return exp === "all" || c.experience === exp;
+  });
+  var spent = list.reduce(function (a, c) { return a + (c.spent || 0); }, 0);
+  var imps = list.reduce(function (a, c) { return a + (c.impressions || 0); }, 0);
+  var clicks = list.reduce(function (a, c) { return a + (c.clicks || 0); }, 0);
+  var plays = list.reduce(function (a, c) { return a + (c.plays || 0); }, 0);
+  var robux = list.reduce(function (a, c) { return a + (c.robuxEarned || 0); }, 0);
+  var ctr = imps ? Math.round((clicks / imps) * 1000) / 10 : 0;
+  var conv = clicks ? Math.round((plays / clicks) * 1000) / 10 : 0;
+  $("kpisAds").innerHTML = [
+    { n: fmtMoney(spent), l: "Invertido (Ads)", s: "gasto en campañas" },
+    { n: fmtNum(imps), l: "Impresiones", s: "alcance publicitario" },
+    { n: fmtNum(clicks), l: "Clicks", s: "CTR " + ctr + "%" },
+    { n: fmtNum(plays), l: "Plays (llegaron)", s: "conv. click→play " + conv + "%" },
+    { n: fmtMoney(robux), l: "Robux ganados", s: "0: aún sin tienda/skins" },
+  ].map(function (i) {
+    return '<div class="kpi"><div class="n">' + escHtml(i.n) + '</div><div class="l">' + escHtml(i.l) + '</div><div class="s">' + escHtml(i.s) + '</div></div>';
+  }).join("");
+
+  var tb = $("tblAds").querySelector("tbody");
+  if (!list.length) {
+    tb.innerHTML = '<tr><td colspan="9" class="empty">Sin campañas cargadas todavía</td></tr>';
+    return;
+  }
+  // orden cronológico
+  list.sort(function (a, b) { return String(a.start).localeCompare(String(b.start)); });
+  tb.innerHTML = list.map(function (c) {
+    var label = c.experience === "street" ? "🏎️ Carrera" : c.experience === "activation" ? "🎪 Activación" : (c.experience || "");
+    return "<tr><td><b>" + escHtml(label) + " · " + escHtml(c.adSet || c.id) + "</b></td>" +
+      "<td>" + escHtml(fmtDateStr(c.start)) + "</td>" +
+      "<td>" + escHtml(fmtDateStr(c.end)) + "</td>" +
+      "<td><b>" + escHtml(fmtMoney(c.spent)) + "</b></td>" +
+      "<td>" + escHtml(fmtNum(c.impressions)) + "</td>" +
+      "<td>" + escHtml(fmtNum(c.clicks)) + "</td>" +
+      "<td><b>" + escHtml(fmtNum(c.plays)) + "</b></td>" +
+      "<td>" + escHtml((c.playRate || 0) + "%") + "</td>" +
+      "<td>" + escHtml(fmtMoney(c.robuxEarned)) + "</td></tr>";
+  }).join("");
 }
 
 function chartOpts(xLabel) {
