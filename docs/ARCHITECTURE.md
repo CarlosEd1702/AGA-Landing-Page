@@ -78,14 +78,17 @@ CREATE TABLE aga_inventories (
 | `AGA_Game_Sessions` | `dd29d762-7e41-419b-b394-8259b8225dfc` | **Sesiones de juego** de los 4 places AGA: entrada/salida por jugador para heatmap, duración promedio y picos. Columnas: Session ID, Roblox User Id, Place Id, Experience, Source (`bottle_qr`\|`direct`), Code, Entered At, Exited At, Duration Seconds. |
 
 **Flujo de la demo (sin recompensa por ahora):**
-1. QR físico (simula botella) → landing `?code=AGA-…` → POST **AGA QR Scan Register** (`863a5932-b44b-4f27-ab2f-1860e4b3d6ff`) → fila en `AGA_QR_Scans` Status "1. Escaneado".
-2. Deep link `launchData={qrCode, companyId:"aga", experience}` → Roblox lobby → servidor llama `AGACentralService:RecordQRAttribution` → la fila pasa a "2. Ingresó al Juego" (UserId + PlaceId + Entered At). UI: *"¡Bienvenido desde la promoción AGA!"*.
-3. **NO se otorga recompensa** — `GrantReward()` queda comentado/preparado (Add-On futuro). El claim con recompensa sigue cableado en `AGAQRRedeemService`.
-4. Cada place AGA registra entrada/salida en `AGA_Game_Sessions` (`AGAGameSessionsService`).
+1. QR físico (simula botella) → **URL DIRECTA a Roblox** (sin subdominio intermedio):
+   `https://www.roblox.com/games/<PLACE_ID>/?launchData=AGA_BOTTLE_PROMO`
+   (Carrera → `123585082660675` · Activación → `99086248105983`).
+2. Roblox recibe `launchData`: JSON (`{qrCode,...}`) o **token plano** de campaña (`AGA_BOTTLE_PROMO`). `LaunchQRController` parsea ambos; con token plano envía `{code, campaign=true}` al remote.
+3. `AGAQRRedeemService.claimForPlayer`: si `campaign=true` se saltea la validación contra el lote y llama `AGACentralService:RecordQRAttribution` → fila en `AGA_QR_Scans` Status "2. Ingresó al Juego" (UserId + PlaceId + Entered At). UI: *"¡Bienvenido desde la promoción AGA!"*.
+4. **NO se otorga recompensa** — `GrantReward()` queda comentado/preparado (Add-On futuro). El claim con recompensa sigue cableado en `AGAQRRedeemService`.
+5. Lobbie → `AGA_Game_Sessions` (`AGAGameSessionsService`); pistas → telemetría real en `AGA_RaceSessions`/`AGA_RaceParticipants`/`AGA_DailyRaceSummary`.
 
 **Dashboard** (`reporte.html`) → endpoint **AGA Dashboard** (`b8023eb1-f4dd-4581-9598-0149d22fef7f`):
-- A. Conversión QR: total escaneos, usuarios únicos convertidos, escaneos/convertidos por día.
-- B. Engagement: heatmap día×hora (horas pico), duración promedio por experiencia, flujo por hora, jugadores activos por día.
+- **A. Conversión QR** (`AGA_QR_Scans`): demo del Add-On — admite datos de ejemplo (simulados) para el pitch.
+- **B. Engagement REAL** (`AGA_RaceSessions` + `AGA_RaceParticipants` + `AGA_DailyRaceSummary`): heatmap día×hora (inicios de carrera), duración promedio por experiencia, flujo por hora, jugadores únicos y activos por día. `source: "aga_racesessions_real"`.
 
 ---
 
@@ -94,8 +97,8 @@ CREATE TABLE aga_inventories (
 | Endpoint | Método/Body | Función |
 |---|---|---|
 | **AGA Live Stats** (`42064538-6bc8-4e6f-a386-070d929a9220`) | POST `{companyId:"aga", experience:"all"\|"street"\|"activation"}` | KPIs + serie diaria + **byExperience** (comparativa) + últimos canjes. Rechaza companyId ≠ aga. |
-| **AGA Dashboard** (`b8023eb1-f4dd-4581-9598-0149d22fef7f`) | POST `{companyId:"aga"}` | Reporte completo: conversión QR (`AGA_QR_Scans`) + engagement (`AGA_Game_Sessions`: heatmap día×hora, duración por experiencia, flujo por hora, activos por día). |
-| **AGA QR Scan Register** (`863a5932-b44b-4f27-ab2f-1860e4b3d6ff`) | POST `{code, companyId, experience, placeId}` | La landing llama al escanear un QR de botella → crea/actualiza fila en `AGA_QR_Scans` Status "1. Escaneado" + Scanned At. |
+| **AGA Dashboard** (`b8023eb1-f4dd-4581-9598-0149d22fef7f`) | POST `{companyId:"aga"}` | Reporte completo: conversión QR (`AGA_QR_Scans`, demo) + engagement **REAL** (`AGA_RaceSessions`/`AGA_RaceParticipants`/`AGA_DailyRaceSummary`: heatmap día×hora, duración por experiencia, flujo por hora, activos por día). |
+| **AGA QR Scan Register** (`863a5932-b44b-4f27-ab2f-1860e4b3d6ff`) | POST `{code, companyId, experience, placeId}` | La landing llama al escanear un QR → crea/actualiza fila en `AGA_QR_Scans` Status "1. Escaneado" + Scanned At (opcional: el QR ya puede ir directo a Roblox con token plano). |
 | AGA QR Mint *(plantilla — clonar de EAS `f43bce3d`)* | POST `{prefix, count, experience}` | Genera lote de códigos en `AGA_Promotions` |
 
 > **Nota anti-carrera entre juegos**: el consumo del código ocurre **en el backend**

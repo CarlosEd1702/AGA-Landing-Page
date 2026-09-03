@@ -95,25 +95,26 @@
     <div id="loading" class="loading">Cargando métricas…</div>
 
     <div id="dash" style="display:none">
-      <!-- ══════════════ A · CONVERSIÓN QR (VENTAS / ATRIBUCIÓN) ══════════════ -->
-      <div class="section-title">🔳 A · Conversión QR (Atribución de compra)</div>
+      <!-- ══════════════ A · CONVERSIÓN QR (DEMO / SIMULADO — pitch Add-On) ══════════════ -->
+      <div class="section-title">🔳 A · Conversión QR <span style="font-size:10px;color:#7d8ea3;text-transform:none;letter-spacing:0">— demo del Add-On (datos simulados de ejemplo)</span></div>
       <div class="kpis" id="kpisQr"></div>
       <div class="panel">
         <h2>📈 Escaneos por Día (QR de botella → landing)</h2>
         <div class="chart-box"><canvas id="chartQr"></canvas></div>
+        <div class="stat-note">ℹ️ Sección demostrativa para el pitch comercial del Add-On de QR: usa un set de ejemplo bien equilibrado en AGA_QR_Scans.</div>
       </div>
 
-      <!-- ══════════════ B · ENGAGEMENT GENERAL ══════════════ -->
-      <div class="section-title">🎮 B · Engagement general del juego</div>
+      <!-- ══════════════ B · ENGAGEMENT GENERAL (DATOS REALES) ══════════════ -->
+      <div class="section-title">🎮 B · Engagement general del juego <span style="font-size:10px;color:#7d8ea3;text-transform:none;letter-spacing:0">— datos REALES de telemetría</span></div>
       <div class="kpis" id="kpisEng"></div>
       <div class="two-col">
         <div class="panel">
-          <h2>⏱️ Duración promedio de sesión por experiencia</h2>
+          <h2>⏱️ Duración promedio por experiencia (carreras reales)</h2>
           <div style="overflow-x:auto"><table id="tblExp">
-            <thead><tr><th>Experiencia</th><th>Sesiones</th><th>Promedio</th></tr></thead>
+            <thead><tr><th>Experiencia</th><th>Carreras</th><th>Promedio</th></tr></thead>
             <tbody></tbody>
           </table></div>
-          <div class="stat-note">Retención: tiempo medio que un jugador permanece en cada experiencia (AGA_Game_Sessions).</div>
+          <div class="stat-note">Fuente real: AGA_RaceSessions (StartedAt→EndedAt por PlaceId). Tiempo medio de cada carrera en la pista de cada experiencia.</div>
         </div>
         <div class="panel">
           <h2>⏰ Flujo por hora del día (entradas de jugadores)</h2>
@@ -121,7 +122,7 @@
         </div>
       </div>
       <div class="panel">
-        <h2>🗓️ Mapa de calor de actividad — Día de la semana × Hora (horas pico)</h2>
+        <h2>🗓️ Mapa de calor de actividad real — Día de la semana × Hora (inicios de carrera)</h2>
         <div class="hm-wrap"><div class="hm" id="heatmap"></div></div>
         <div class="hm-legend">
           <span>Menos actividad</span>
@@ -241,9 +242,9 @@ function renderQr(q) {
 function renderEngagement(eng, exp) {
   const avg = Math.round((eng.avgSessionSeconds || 0) / 60);
   const items = [
-    { n: eng.uniquePlayers ?? 0, l: "Jugadores únicos", s: "sesiones de juego (4 places AGA)" },
-    { n: eng.totalSessions ?? 0, l: "Sesiones totales", s: "entradas registradas" },
-    { n: avg + " min", l: "Duración promedio", s: "por sesión de juego" },
+    { n: eng.uniquePlayers ?? 0, l: "Jugadores únicos", s: "participantes reales (carreras)" },
+    { n: eng.totalSessions ?? 0, l: "Carreras jugadas", s: "telemetría real AGA_RaceSessions" },
+    { n: avg + " min", l: "Duración promedio", s: "por carrera (real)" },
   ];
   $("kpisEng").innerHTML = items.map(i =>
     '<div class="kpi"><div class="n">' + i.n + '</div><div class="l">' + i.l + '</div><div class="s">' + i.s + '</div></div>'
@@ -253,7 +254,7 @@ function renderEngagement(eng, exp) {
   const tb = $("tblExp").querySelector("tbody");
   const rows = (eng.avgSessionByExp || []).filter(r => exp === "all" || r.experience === exp);
   if (!rows.length) {
-    tb.innerHTML = '<tr><td colspan="3" class="empty">Sin datos</td></tr>';
+    tb.innerHTML = '<tr><td colspan="3" class="empty">Sin datos reales todavía</td></tr>';
   } else {
     tb.innerHTML = rows.map(r => {
       const label = r.experience === "street" ? "🏎️ Carrera para Impresionar" : r.experience === "activation" ? "🎪 Activación AGA" : r.experience;
@@ -262,22 +263,22 @@ function renderEngagement(eng, exp) {
     }).join("");
   }
 
-  // Flujo por hora
+  // Flujo por hora (carreras reales iniciadas por hora)
   const flow = eng.flowByHour || [];
   if (charts.flow) charts.flow.destroy();
   charts.flow = new Chart($("chartFlow").getContext("2d"), {
     type: "bar",
     data: {
       labels: flow.map((_, i) => i + "h"),
-      datasets: [{ label: "Entradas", data: flow, backgroundColor: "rgba(225,29,46,.75)", borderRadius: 3 }],
+      datasets: [{ label: "Carreras iniciadas", data: flow, backgroundColor: "rgba(225,29,46,.75)", borderRadius: 3 }],
     },
     options: chartOpts("Hora"),
   });
 
-  // Heatmap día × hora
+  // Heatmap día × hora (inicios reales de carrera)
   renderHeatmap(eng.heatmap || []);
 
-  // Jugadores activos por día
+  // Jugadores activos por día (resumen diario real AGA_DailyRaceSummary)
   const daily = eng.dailyActive || [];
   if (charts.daily) charts.daily.destroy();
   charts.daily = new Chart($("chartDaily").getContext("2d"), {
@@ -286,7 +287,7 @@ function renderEngagement(eng, exp) {
       labels: daily.map(d => d.date),
       datasets: [
         { label: "Jugadores únicos", data: daily.map(d => d.users || 0), borderColor: "#22c55e", backgroundColor: "rgba(34,197,94,.12)", fill: true, tension: .3 },
-        { label: "Sesiones", data: daily.map(d => d.sessions || 0), borderColor: "#f97316", backgroundColor: "rgba(249,115,22,.1)", fill: true, tension: .3 },
+        { label: "Carreras", data: daily.map(d => d.sessions || 0), borderColor: "#f97316", backgroundColor: "rgba(249,115,22,.1)", fill: true, tension: .3 },
       ],
     },
     options: chartOpts("Día"),

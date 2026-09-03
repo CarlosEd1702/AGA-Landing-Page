@@ -128,17 +128,18 @@ apaga, `reporte.html` puede mostrar un aviso. No afecta a Roblox.
 | # | Paso | Dónde | Qué se ve |
 |---|---|---|---|
 | 1 | Verificar `qrRedemptionEnabled=true` (web y Roblox) | `config.js` + `AGAModuleConfig` | — |
-| 2 | Abrir `index.html` | Navegador | Vista Demo con input "Escribí tu código" |
-| 3 | Ingresar/escanear `AGA-2026-0001` | `index.html` / `qr.html` | POST → `AGA_QR_Scans` Status "1. Escaneado" |
-| 4 | Pulsar "Abrir en Roblox" → deep link | Roblox | Entra al Lobby y muestra el welcome |
-| 5 | El servidor registra la atribución | Lobby (server) | `AGA_QR_Scans` → Status "2. Ingresó al Juego" + UserId (sin +Coins) |
-| 6 | Abrir `reporte.html` | Navegador (otra pestaña) | Sección A (conversión QR) y Sección B (heatmap/duración/concurrencia) reflejan el movimiento (auto-refresh 15 s) |
+| 2 | Escanear un QR de `qr.html` (o abrir su URL) | celular / navegador | URL directa `https://www.roblox.com/games/<PLACE_ID>/?launchData=AGA_BOTTLE_PROMO` (sin 404) |
+| 3 | Roblox recibe el token plano de campaña | Lobby | Welcome "¡Bienvenido desde la promoción AGA!" (sin +Coins) |
+| 4 | El servidor registra la atribución | Lobby (server) | `AGA_QR_Scans` → Status "2. Ingresó al Juego" + UserId (source bottle_qr) |
+| 5 | (Alternativo) Ingresar un código del lote en `index.html` | Navegador | Deep link JSON → mismo welcome/atribución |
+| 6 | Abrir `reporte.html` | Navegador (otra pestaña) | Sección A (conversión QR, demo) + Sección B (engagement REAL de telemetría) — auto-refresh 15 s |
 | 7 | Cerrar la demo | — | Poner flags en `false` (sección 3) y republicar |
 
 > **Nota**: `reporte.html` consume el endpoint **AGA Dashboard**
-> (`b8023eb1-…`) que devuelve conversión QR (`AGA_QR_Scans`) + engagement
-> (`AGA_Game_Sessions`: heatmap día×hora, duración por experiencia, flujo por
-> hora, activos por día).
+> (`b8023eb1-…`). Sección A = conversión QR (`AGA_QR_Scans`, demo simulada para
+> el pitch). Sección B = **datos REALES** (`AGA_RaceSessions` +
+> `AGA_RaceParticipants` + `AGA_DailyRaceSummary`: heatmap día×hora, duración por
+> experiencia, flujo por hora, activos por día).
 
 ### Chequeo rápido del enforcement (Roblox, Server)
 
@@ -168,6 +169,7 @@ luau/LaunchQRController.lua   ← maneja ModuleDisabled (aviso interno, sin romp
 luau/QRRedeemController.lua   ← maneja ModuleDisabled (aviso interno, sin romper)
 tools/set-mode.ps1            ← NUEVO: toggle Demo ⇄ Entrega (Windows/PowerShell)
 tools/set-mode.sh             ← NUEVO: toggle Demo ⇄ Entrega (bash)
+tools/check-qr-links.js       ← NUEVO: verificación de QR/links (PlaceIds + HTTP 200, sin 404)
 docs/FEATURE_FLAGS.md         ← este documento
 ```
 

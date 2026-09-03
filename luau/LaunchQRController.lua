@@ -46,6 +46,10 @@ local function getOrWaitGui(name)
 	return gui
 end
 
+-- Parsea launchData con tolerancia a DOS formatos:
+--   1) JSON: { qrCode = "AGA-2026-0001", companyId = "aga", experience = "street" }
+--   2) TEXTO PLANO (campaña de botella): "AGA_BOTTLE_PROMO"
+--      → { campaign = true, token = raw } (QR impreso en la botella; atribución sin recompensa)
 local function parseLaunchData()
 	local ok, joinData = pcall(function()
 		return player:GetJoinData()
@@ -53,21 +57,31 @@ local function parseLaunchData()
 	if not ok or typeof(joinData) ~= "table" then return nil end
 	local raw = joinData.LaunchData
 	if typeof(raw) ~= "string" or raw == "" then return nil end
+
+	-- Intenta JSON (formato clásico del deep link del lobby)
 	local decodeOk, decoded = pcall(function()
 		return HttpService:JSONDecode(raw)
 	end)
-	if not decodeOk or typeof(decoded) ~= "table" then return nil end
-	return decoded
+	if decodeOk and typeof(decoded) == "table" then
+		return decoded
+	end
+
+	-- No es JSON → token de campaña plano (QR de botella → atribución bottle_qr)
+	local token = tostring(raw):upper():gsub("%s+", "")
+	if token == "" then return nil end
+	return { campaign = true, token = token }
 end
 
 -- Invoca el claim y devuelve el resultado { Success, Coins, ErrorMessage, ... }
-local function invokeClaim(code)
+local function invokeClaim(code, campaign)
 	local remote = findSharedRemote("ClaimQRRemote")
 	if not remote then
 		return { Success = false, ErrorMessage = "Servicio de canje no disponible." }
 	end
+	local request = { code = code }
+	if campaign then request.campaign = true end
 	local ok, result = pcall(function()
-		return remote:InvokeServer({ code = code })
+		return remote:InvokeServer(request)
 	end)
 	if not ok then
 		return { Success = false, ErrorMessage = "Error de conexión con el servidor." }
@@ -79,7 +93,8 @@ local function invokeClaim(code)
 end
 
 -- Abre el modal de reclamo con el código precargado y ejecuta el claim.
-local function openRedeemWithCode(code, claimNow)
+-- campaign=true → viene de un QR de botella (token plano, sin recompensa).
+local function openRedeemWithCode(code, claimNow, campaign)
 	code = tostring(code or ""):upper():gsub("%s+", "")
 	if code == "" then return end
 
@@ -97,12 +112,16 @@ local function openRedeemWithCode(code, claimNow)
 		codeBox.Text = code
 	end
 	if feedback then
-		feedback.Text = "🎟️ Código " .. code .. " detectado. Reclamando…"
+		if campaign then
+			feedback.Text = "🍾 Promoción AGA detectada. Registrando tu entrada…"
+		else
+			feedback.Text = "🎟️ Código " .. code .. " detectado. Reclamando…"
+		end
 	end
 
 	-- Dispara el claim por el deep link (auto)
 	if claimNow ~= false then
-		local result = invokeClaim(code)
+		local result = invokeClaim(code, campaign)
 
 		-- FEATURE FLAG server-side: si AGA no tiene el Add-On QR contratado
 		-- (Entrega), el servidor responde ModuleDisabled=true. No abrimos la
@@ -146,10 +165,20 @@ end
 -- Punto de entrada
 -- ============================================================================
 local launch = parseLaunchData()
-if launch and typeof(launch) == "table" and tostring(launch.companyId or ""):lower() == "aga" and tostring(launch.qrCode or "") ~= "" then
+
+-- Caso 1: JSON clásico con qrCode de AGA (deep link del lobby con código de botella)
+if launch and typeof(launch) == "table" and not launch.campaign
+	and tostring(launch.companyId or ""):lower() == "aga"
+	and tostring(launch.qrCode or "") ~= "" then
 	task.wait(1.5) -- espera a que la UI/DataService del juego esté lista
 	openRedeemWithCode(launch.qrCode, true)
 	print("[LaunchQR] deep link AGA detectado:", launch.qrCode, "exp=", tostring(launch.experience or ""))
+
+-- Caso 2: token de campaña PLANO (QR impreso en botella → "AGA_BOTTLE_PROMO")
+elseif launch and typeof(launch) == "table" and launch.campaign == true and tostring(launch.token or "") ~= "" then
+	task.wait(1.5)
+	openRedeemWithCode(launch.token, true, true) -- campaign=true → atribución bottle_qr sin recompensa
+	print("[LaunchQR] campaña de botella AGA detectada:", tostring(launch.token))
 else
 	print("[LaunchQR] sin launchData AGA")
 end

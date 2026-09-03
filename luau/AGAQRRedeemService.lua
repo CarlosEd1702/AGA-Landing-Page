@@ -153,15 +153,18 @@ function AGAQRRedeemService:claimForPlayer(player, request)
 	if code == "" then
 		return { Success = false, ErrorMessage = "El código ingresado no existe." }
 	end
+	local isCampaign = request.campaign == true
 
 	-- 1) Validar el código contra el lote local (mensajes claros). NO consume nada.
+	--    EXCEPTO campañas de botella (launchData plano tipo "AGA_BOTTLE_PROMO"):
+	--    ahí no hay código de lote individual → la atribución se registra igual.
 	local reward = config.QRPromosConfig and config.QRPromosConfig.GetReward(code)
-	if not reward then
+	if not isCampaign and not reward then
 		return { Success = false, ErrorMessage = "El código ingresado no existe." }
 	end
 	-- El código pertenece a la otra experiencia → rechazarlo aquí (el backend
 	-- central igual lo rechazaría, pero el mensaje es más claro).
-	if reward.Exp ~= config.Experience then
+	if not isCampaign and reward and reward.Exp ~= config.Experience then
 		return {
 			Success = false,
 			ErrorMessage = "Este código es para la experiencia '" ..
